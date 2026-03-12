@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>荒野亂鬥 PRO - V9.0 (真正多人對戰+AI共存)</title>
+    <style>
+        :root {
+            --primary: #fcd307;
+            --secondary: #e91e63;
+            --panel-bg: rgba(15, 15, 25, 0.95);
+            --text-main: #ffffff;
+        }
+        
+        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+        
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; color: var(--text-main); touch-action: none; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+
+        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; }
+        .interactive { pointer-events: auto; }
+
+        /* 通用按鈕 */
+        .btn { background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%); border: 2px solid #fff; border-radius: 8px; padding: 10px 20px; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #005cbf; text-align: center; }
+        .btn:active { transform: translateY(4px); box-shadow: 0 0 0; }
+        .btn-yellow { background: linear-gradient(180deg, #ff9800 0%, #ffc107 100%); box-shadow: 0 4px 0 #b36b00; }
+        .btn-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); border: 1px solid #fff; font-size: 1.2rem; cursor: pointer; margin-left: 5px; transition: 0.2s; }
+        .btn-icon:active { background: #fff; color: #000; }
+
+        /* 大廳與選擇器 */
+        .top-bar { display: flex; justify-content: space-between; padding: 10px 20px; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); }
+        .selector-container { position: absolute; top: 60%; width: 100%; display: flex; flex-direction: column; align-items: center; pointer-events: none; gap: 10px; }
+        .selector-box { display: inline-flex; align-items: center; background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 30px; pointer-events: auto; gap: 20px; min-width: 320px; justify-content: space-between; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(5px); }
+        .arrow-btn { font-size: 1.5rem; color: white; cursor: pointer; padding: 0 10px; }
+        .bottom-nav { position: absolute; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 10px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); align-items: flex-end; }
+
+        /* 線上玩家列表 */
+        .lobby-players-box { position: absolute; top: 80px; right: 20px; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 10px; width: 180px; max-height: 200px; overflow-y: auto; pointer-events: auto; }
+        .lobby-players-title { font-size: 0.8rem; color: #aaa; margin-bottom: 5px; border-bottom: 1px solid #555; padding-bottom: 5px; }
+        .player-entry { font-size: 0.8rem; display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .player-entry .p-id { color: #4facfe; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60px; }
+        .player-entry .p-char { color: #fcd307; font-size: 0.75rem; }
+
+        /* 3D 展示區 */
+        #lobby-3d-placeholder { position: absolute; top: 10%; left: 0; width: 100%; height: 50%; pointer-events: auto; }
+
+        /* 戰鬥介面 */
+        #battle-ui { display: none; }
+        .battle-header { position: absolute; top: 10px; width: 100%; display: flex; justify-content: center; gap: 20px; font-weight: bold; text-shadow: 1px 1px 2px #000; font-size: 1.2rem; }
+        .score-box { background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; border: 2px solid #fff; min-width: 80px; text-align: center; }
+        
+        /* 虛擬搖桿 */
+        .joystick-area { position: absolute; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); pointer-events: auto; touch-action: none; transition: opacity 0.3s; }
+        .joystick-knob { position: absolute; width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.8); top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        #stick-l { bottom: 50px; left: 50px; }
+        #stick-r { bottom: 50px; right: 50px; border-color: rgba(255,0,0,0.3); }
+        #stick-r .joystick-knob { background: rgba(255,100,100,0.8); }
+
+        /* 技能按鈕群 */
+        .skill-group { position: absolute; bottom: 60px; right: 220px; display: flex; flex-direction: column; gap: 15px; align-items: flex-end; pointer-events: auto; }
+        .action-btn { width: 60px; height: 60px; border-radius: 50%; background: #222; border: 3px solid #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.5); position: relative; }
+        .action-btn:active { transform: scale(0.9); }
+        .btn-super { width: 90px; height: 90px; border-color: #fcd307; color: #fcd307; background: rgba(255, 215, 0, 0.2); }
+        .btn-super.ready { background: #fcd307; color: #000; box-shadow: 0 0 20px #fcd307; animation: pulse 1s infinite; }
+        .btn-gadget { width: 50px; height: 50px; border-color: #00e676; color: #00e676; }
+        
+        /* 右側功能列 */
+        .side-menu { position: absolute; top: 60px; right: 20px; display: flex; flex-direction: column; gap: 10px; pointer-events: auto; }
+        
+        /* 彈出文字與UI */
+        #damage-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 50; }
+        .dmg-num { position: absolute; font-weight: 900; font-size: 1.5rem; text-shadow: 1px 1px 0 #000; animation: floatUp 0.8s forwards; pointer-events: none; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-50px) scale(1.2); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        .toast { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 20px; pointer-events: none; opacity: 0; transition: 0.3s; z-index: 300; }
+        
+        #game-over-overlay { display: none; background: rgba(0,0,0,0.9); z-index: 200; align-items: center; justify-content: center; flex-direction: column; }
+        
+        /* 載入中遮罩 */
+        #loading-screen { position: absolute; top:0; left:0; width:100%; height:100%; background: #000; z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; }
+        .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.3); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+    <!-- 啟動載入畫面 -->
+    <div id="loading-screen">
+        <div class="spinner"></div>
+        <h3>連接雲端伺服器中...</h3>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+    <div id="damage-container"></div>
+    <div id="toast" class="toast">提示訊息</div>
+
+    <!-- 大廳 UI -->
+    <div id="lobby-ui" class="ui-layer">
+        <div class="top-bar interactive">
+            <div>
+                <div style="font-weight:bold; color:var(--primary); font-size:1.2rem;">BRAWL PRO v9.0</div>
+                <div style="font-size:0.8rem; color:#00e676;">雲端連線・多人戰鬥同步・保存所有功能</div>
+            </div>
+            <div style="display:flex;">
+                <div class="btn-icon" onclick="window.game.showToast('信箱無新郵件')">✉</div>
+            </div>
+        </div>
+
+        <div class="lobby-players-box" id="lobby-players-box">
+            <div class="lobby-players-title">🟢 線上玩家 (大廳)</div>
+            <div id="players-list-content">載入中...</div>
+        </div>
+
+        <div id="lobby-3d-placeholder" class="interactive" 
+             onmousedown="window.Input.rotateLobby=true" onmouseup="window.Input.rotateLobby=false"
+             ontouchstart="window.Input.rotateLobby=true" ontouchend="window.Input.rotateLobby=false">
+        </div>
+
+        <div class="selector-container">
+            <div class="selector-box">
+                <div class="arrow-btn" onclick="window.game.prevChar()">◀</div>
+                <div style="text-align:center;">
+                    <div id="lobby-char-name" style="color:#00e676; font-size:1.5rem; font-weight:bold;">R1 衝鋒兵·泰德</div>
+                    <div id="lobby-char-class" style="color:#aaa; font-size:0.8rem;">坦克 / 衝鋒</div>
+                </div>
+                <div class="arrow-btn" onclick="window.game.nextChar()">▶</div>
+            </div>
+            <div class="selector-box" style="margin-top:10px;">
+                <div class="arrow-btn" onclick="window.game.prevMode()">◀</div>
+                <div style="text-align:center;">
+                    <div id="lobby-mode-name" style="color:#ff9800; font-size:1.2rem; font-weight:bold;">亂鬥競技場</div>
+                    <div id="lobby-mode-desc" style="color:#aaa; font-size:0.8rem;">多人連線生存</div>
+                </div>
+                <div class="arrow-btn" onclick="window.game.nextMode()">▶</div>
+            </div>
+        </div>
+
+        <div class="bottom-nav interactive">
+            <div class="btn btn-yellow" onclick="window.game.startBattle()" style="width:200px; height:60px; font-size:1.5rem; line-height:36px; box-shadow: 0 0 15px rgba(255,193,7,0.5);">⚔ 開始對戰</div>
+        </div>
+    </div>
+
+    <!-- 戰鬥 UI -->
+    <div id="battle-ui" class="ui-layer">
+        <div class="battle-header">
+            <div class="score-box" id="score-blue" style="color:#2979ff">0</div>
+            <div class="score-box" id="game-timer" style="color:#fff; min-width:100px;">03:00</div>
+            <div class="score-box" id="score-red" style="color:#f44336">0</div>
+        </div>
+
+        <div class="side-menu">
+            <div class="btn-icon" onclick="window.game.toggleZoom()">🔍</div>
+            <div class="btn-icon" onclick="window.game.showToast('發送表情...')">😊</div>
+            <div class="btn-icon" onclick="window.game.showToast('語音：進攻！')">🎤</div>
+        </div>
+
+        <div id="stick-l" class="joystick-area"><div class="joystick-knob" id="knob-l"></div></div>
+        <div id="stick-r" class="joystick-area"><div class="joystick-knob" id="knob-r"></div></div>
+
+        <div class="skill-group">
+            <div class="action-btn btn-gadget" id="btn-gadget" onmousedown="window.Input.onBtnDown('e')" ontouchstart="window.Input.onBtnDown('e')">G</div>
+            <div class="action-btn btn-super" id="btn-super" onmousedown="window.Input.onBtnDown('r')" ontouchstart="window.Input.onBtnDown('r')">☠</div>
+        </div>
+    </div>
+
+    <!-- 遊戲結束 -->
+    <div id="game-over-overlay" class="ui-layer interactive">
+        <div class="result-title" id="result-title" style="font-size:4rem; font-weight:900; color:#fcd307; margin-bottom:30px;">VICTORY!</div>
+        <div style="font-size: 1.5rem; margin-bottom: 20px;">最終得分: <span id="final-score">0</span></div>
+        <div style="display:flex; gap:20px;">
+             <div class="btn btn-yellow" onclick="window.game.returnToLobby()" style="font-size:1.2rem;">返回大廳</div>
+        </div>
+    </div>
+
+    <!-- Firebase 模組化引入與主要邏輯 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ==========================================
+        // Firebase Setup & Environment Variables
+        // ==========================================
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'brawl-pro-v9-multiplayer';
+        let firebaseConfig = {};
+        try {
+            if (typeof __firebase_config !== 'undefined') firebaseConfig = JSON.parse(__firebase_config);
+        } catch(e) { console.warn("Firebase config not found, using default empty config."); }
+
+        let app, auth, db, currentUser = null;
+        
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch(e) {
+            console.error("Firebase init failed", e);
+        }
+
+        // ==========================================
+        // 遊戲數據資料庫
+        // ==========================================
+        const ROSTER = [
+            { id: 'r1', name: '衝鋒兵·泰德', color: '#4caf50', hp: 6000, speed: 6, atk: { dmg: 550, type: 'melee', cd: 0.8 }, skills: { q: { name: '衝鋒', type: 'dash', val: 650 }, e: { name: '防禦', type: 'buff_def', val: 0.3, dur: 5 }, r: { name: '戰吼', type: 'buff_atk', val: 0.25, dur: 6 } } },
+            { id: 'r2', name: '火槍手·艾莉', color: '#ff5722', hp: 3800, speed: 6.5, atk: { dmg: 520, type: 'shot', cd: 1.0 }, skills: { q: { name: '燃燒彈', type: 'shot_dot', val: 80 }, e: { name: '後撤', type: 'dash_back', val: 150 }, r: { name: '火焰風暴', type: 'aoe_dot', val: 220, dur: 4 } } },
+            { id: 'r3', name: '炸彈人·布魯', color: '#795548', hp: 4200, speed: 5.8, atk: { dmg: 650, type: 'throw', cd: 1.2 }, skills: { q: { name: '黏彈', type: 'shot_sticky', val: 900 }, e: { name: '炸飛', type: 'dash_dmg', val: 450 }, r: { name: '連鎖爆', type: 'aoe_chain', val: 500 } } },
+            { id: 'r11', name: '冰霜射手·雪莉', color: '#00bcd4', hp: 3700, speed: 6, atk: { dmg: 520, type: 'shot_slow', cd: 1.0 }, skills: { q: { name: '冰陷阱', type: 'trap_slow', val: 0.5 }, e: { name: '冰牆', type: 'wall_ice', hp: 1000 }, r: { name: '冰雨', type: 'aoe_rain', val: 450 } } },
+            { id: 'r99', name: '光束大師·雷', color: '#e040fb', hp: 3500, speed: 7, atk: { dmg: 80, type: 'laser', cd: 0.1 }, skills: { q: { name: '折射盾', type: 'shield_reflect', val: 500 }, e: { name: '閃現', type: 'teleport', val: 400 }, r: { name: '毀滅光束', type: 'laser_mega', val: 200 } } }
+        ];
+
+        const MODES = [
+            { id: 'arena', name: '亂鬥競技場', desc: '多人連線生存', color: '#ff9800' },
+            { id: 'survival', name: '荒野生死鬥', desc: '生存到最後一刻', color: '#4caf50' }
+        ];
+
+        // ==========================================
+        // 核心輸入系統
+        // ==========================================
+        window.Input = {
+            move: { x: 0, y: 0, active: false },
+            aim: { x: 0, y: 0, active: false, isAuto: false, fire: false },
+            keys: {}, rotateLobby: false,
+            touchL: null, touchR: null, originL: {x:0, y:0}, originR: {x:0, y:0},
+            btnSuper: false, btnGadget: false,
+            
+            init() {
+                window.addEventListener('keydown', e => this.keys[e.key.toLowerCase()] = true);
+                window.addEventListener('keyup', e => this.keys[e.key.toLowerCase()] = false);
+                window.addEventListener('mousemove', e => { if(!this.touchR) { this.aim.mousePos = { x: e.clientX, y: e.clientY }; this.aim.active = true; } });
+                window.addEventListener('mousedown', () => { if(!this.touchR) this.aim.mouseDown = true; });
+                window.addEventListener('mouseup', () => { if(!this.touchR) this.aim.mouseDown = false; });
+                
+                const handleTouch = (e, side, type) => {
+                    e.preventDefault();
+                    for(let i=0; i<e.changedTouches.length; i++) {
+                        const t = e.changedTouches[i];
+                        const el = document.getElementById(side === 'l' ? 'stick-l' : 'stick-r');
+                        if(type === 'start') {
+                            if(side === 'l') { this.touchL = t.identifier; const r = el.getBoundingClientRect(); this.originL = {x: r.left+r.width/2, y: r.top+r.height/2}; this.updateStick(t, 'l'); }
+                            if(side === 'r') { this.touchR = t.identifier; const r = el.getBoundingClientRect(); this.originR = {x: r.left+r.width/2, y: r.top+r.height/2}; this.aim.isAuto=false; this.updateStick(t, 'r'); }
+                        }
+                        if(type === 'move') {
+                            if(t.identifier === this.touchL) this.updateStick(t, 'l');
+                            if(t.identifier === this.touchR) this.updateStick(t, 'r');
+                        }
+                        if(type === 'end') {
+                            if(t.identifier === this.touchL) { this.touchL = null; this.move = {x:0, y:0, active:false}; this.resetKnob('l'); }
+                            if(t.identifier === this.touchR) { 
+                                if(Math.hypot(this.aim.x, this.aim.y) < 0.2) this.aim.isAuto = true; else this.aim.fire = true;
+                                this.touchR = null; this.aim.active=false; this.resetKnob('r'); 
+                            }
+                        }
+                    }
+                };
+
+                const elL = document.getElementById('stick-l');
+                const elR = document.getElementById('stick-r');
+                ['touchstart', 'touchmove', 'touchend'].forEach(evt => {
+                    elL.addEventListener(evt, e => handleTouch(e, 'l', evt.replace('touch','')));
+                    elR.addEventListener(evt, e => handleTouch(e, 'r', evt.replace('touch','')));
+                });
+            },
+            updateStick(touch, side) {
+                const origin = side === 'l' ? this.originL : this.originR;
+                const maxDist = 50;
+                let dx = touch.clientX - origin.x, dy = touch.clientY - origin.y;
+                const dist = Math.hypot(dx, dy);
+                if(dist > maxDist) { dx = (dx/dist)*maxDist; dy = (dy/dist)*maxDist; }
+                document.getElementById('knob-'+side).style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                if(side === 'l') this.move = { x: dx/maxDist, y: dy/maxDist, active: true };
+                else { this.aim.x = dx/maxDist; this.aim.y = dy/maxDist; this.aim.active = true; }
+            },
+            resetKnob(side) { document.getElementById('knob-'+side).style.transform = `translate(-50%, -50%)`; },
+            onBtnDown(key) { if(key === 'r') this.btnSuper = true; if(key === 'e') this.btnGadget = true; setTimeout(() => { this.btnSuper=false; this.btnGadget=false; }, 200); }
+        };
+
+        // ==========================================
+        // 遊戲主引擎 (保留 V8 所有功能，新增即時連線對戰)
+        // ==========================================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+
+        window.Game = class {
+            constructor() {
+                this.state = 0; // 0: Lobby, 1: Battle, 2: GameOver
+                this.player = null; 
+                this.otherPlayers = {}; // V9 新增：存放其他真實玩家
+                this.enemies = []; // 保留 V8 AI 敵人
+                this.bullets = [];
+                this.selChar = 0; this.selMode = 0; 
+                this.lobbyAngle = 0; this.camera = {x:0, y:0, zoom:1};
+                
+                // 保留 V8 地圖與障礙物設定
+                this.mapW = 2000; this.mapH = 1500;
+                this.obstacles = [
+                    {x: 400, y: 300, w: 200, h: 100}, // 左上
+                    {x: 1400, y: 1100, w: 200, h: 100}, // 右下
+                    {x: 950, y: 500, w: 100, h: 500}, // 中央大牆
+                    {x: 200, y: 800, w: 150, h: 150}, // 左中
+                    {x: 1650, y: 400, w: 150, h: 150} // 右上
+                ];
+
+                this.scoreBlue = 0; this.scoreRed = 0;
+                this.timeRemaining = 180 * 60; // 保留 V8 3分鐘計時
+                this.unsubscribeLobby = null;
+                this.unsubscribeBattle = null;
+                this.syncInterval = null;
+
+                window.Input.init();
+            }
+
+            // ================= 雲端資料同步 =================
+            async initAuthAndData() {
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch(e) { console.error("Auth Failed", e); this.startGameLoop(); }
+                };
+                
+                await initAuth();
+
+                onAuthStateChanged(auth, async (user) => {
+                    if(user) {
+                        currentUser = user;
+                        await this.loadSaveData();
+                        this.joinLobby();
+                        document.getElementById('loading-screen').style.display = 'none';
+                        this.startGameLoop();
+                    }
+                });
+            }
+
+            async loadSaveData() { // 保留 V8 自動存檔讀取
+                if(!currentUser) return;
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'saveData', 'profile');
+                    const snap = await getDoc(docRef);
+                    if(snap.exists()) {
+                        const data = snap.data();
+                        this.selChar = data.selChar || 0;
+                        this.selMode = data.selMode || 0;
+                        this.updateLobbyUI();
+                    }
+                } catch(e) { console.error("Load save error", e); }
+            }
+
+            async autoSave() { // 保留 V8 自動存檔
+                if(!currentUser) return;
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'saveData', 'profile');
+                    await setDoc(docRef, { selChar: this.selChar, selMode: this.selMode, timestamp: Date.now() }, {merge: true});
+                    this.updateLobbyPresence();
+                } catch(e) { console.error("AutoSave error", e); }
+            }
+
+            async joinLobby() { // 保留 V8 大廳列表
+                if(!currentUser) return;
+                this.updateLobbyPresence();
+                
+                const collRef = collection(db, 'artifacts', appId, 'public', 'data', 'lobbyPlayers');
+                if(this.unsubscribeLobby) this.unsubscribeLobby();
+                this.unsubscribeLobby = onSnapshot(collRef, (snap) => {
+                    const players = [];
+                    const now = Date.now();
+                    snap.forEach(doc => {
+                        const data = doc.data();
+                        if(now - data.timestamp < 600000) players.push(data);
+                    });
+                    this.renderLobbyPlayersUI(players);
+                }, (err) => console.error("Lobby sync error", err));
+            }
+
+            async updateLobbyPresence() {
+                if(!currentUser) return;
+                try {
+                    const lobbyRef = doc(db, 'artifacts', appId, 'public', 'data', 'lobbyPlayers', currentUser.uid);
+                    await setDoc(lobbyRef, {
+                        id: currentUser.uid,
+                        charName: ROSTER[this.selChar].name,
+                        charColor: ROSTER[this.selChar].color,
+                        timestamp: Date.now()
+                    });
+                } catch(e) {}
+            }
+
+            renderLobbyPlayersUI(players) {
+                const list = document.getElementById('players-list-content');
+                let html = '';
+                players.forEach(p => {
+                    const isMe = p.id === currentUser?.uid;
+                    const idStr = isMe ? '您 (You)' : p.id.substring(0,5)+'...';
+                    html += `<div class="player-entry">
+                        <span class="p-id">${idStr}</span>
+                        <span class="p-char" style="color:${p.charColor}">${p.charName}</span>
+                    </div>`;
+                });
+                if(players.length === 0) html = '目前無其他玩家';
+                list.innerHTML = html;
+            }
+
+            // ================= UI 與大廳邏輯 =================
+            prevChar() { this.selChar = (this.selChar-1+ROSTER.length)%ROSTER.length; this.updateLobbyUI(); this.autoSave(); }
+            nextChar() { this.selChar = (this.selChar+1)%ROSTER.length; this.updateLobbyUI(); this.autoSave(); }
+            prevMode() { this.selMode = (this.selMode-1+MODES.length)%MODES.length; this.updateLobbyUI(); this.autoSave(); }
+            nextMode() { this.selMode = (this.selMode+1)%MODES.length; this.updateLobbyUI(); this.autoSave(); }
+            
+            updateLobbyUI() {
+                const c = ROSTER[this.selChar]; const m = MODES[this.selMode];
+                document.getElementById('lobby-char-name').innerText = c.name;
+                document.getElementById('lobby-char-name').style.color = c.color;
+                document.getElementById('lobby-mode-name').innerText = m.name;
+                document.getElementById('lobby-mode-name').style.color = m.color;
+                document.getElementById('lobby-mode-desc').innerText = m.desc;
+            }
+
+            showToast(msg) { 
+                const t = document.getElementById('toast'); 
+                t.innerText = msg; t.style.opacity=1; 
+                setTimeout(()=>t.style.opacity=0, 2000); 
+            }
+
+            toggleZoom() {
+                this.camera.zoom = this.camera.zoom === 1 ? 0.6 : 1;
+                this.showToast(`視野縮放: ${this.camera.zoom}x`);
+            }
+
+            // ================= 戰鬥核心 (V9.0 多人同步升級) =================
+            startBattle() {
+                this.state = 1; 
+                document.getElementById('lobby-ui').style.display = 'none'; 
+                document.getElementById('battle-ui').style.display = 'block';
+                document.getElementById('game-over-overlay').style.display = 'none';
+                
+                const c = ROSTER[this.selChar]; 
+                this.player = { 
+                    x: Math.random() * 500 + 100, y: this.mapH - 200, // 隨機出生點避免重疊
+                    radius: 20, hp: c.hp, maxHp: c.hp, speed: c.speed, 
+                    angle: -Math.PI/2, data: c, team: 'blue', 
+                    superCharge: 0, cd: {atk:0, e:0, r:0}, maxCd: {atk: c.atk.cd*60, e:1000, r:100},
+                    lastShootTime: 0 // 紀錄最後發射時間供雲端同步
+                };
+                
+                this.enemies = []; this.bullets = []; this.otherPlayers = {};
+                this.scoreBlue = 0; this.scoreRed = 0;
+                this.timeRemaining = 180 * 60; // 3分鐘
+                
+                // 保留 V8: 生成 AI 敵人讓場地不空曠
+                for(let i=0; i<4; i++) this.spawnEnemy();
+                this.updateScoreUI();
+
+                // === V9 新增: 開始實時對戰同步 ===
+                this.initBattleSync();
+            }
+
+            // V9 新增：加入多人對戰房間並開始同步
+            initBattleSync() {
+                if(!currentUser) return;
+                
+                const battleRef = collection(db, 'artifacts', appId, 'public', 'data', 'battle_players');
+                
+                // 1. 監聽其他玩家的動態
+                if(this.unsubscribeBattle) this.unsubscribeBattle();
+                this.unsubscribeBattle = onSnapshot(battleRef, (snap) => {
+                    const now = Date.now();
+                    snap.forEach(doc => {
+                        if(doc.id !== currentUser.uid) {
+                            const data = doc.data();
+                            // 過濾掉超過5秒沒更新的玩家（視為斷線）
+                            if(now - data.timestamp < 5000) {
+                                // 偵測其他玩家是否開火
+                                if (this.otherPlayers[doc.id] && data.lastShootTime > this.otherPlayers[doc.id].lastShootTime) {
+                                    this.spawnRemoteBullet(data); // 產生遠端玩家的子彈
+                                }
+                                this.otherPlayers[doc.id] = data;
+                            } else {
+                                delete this.otherPlayers[doc.id];
+                            }
+                        }
+                    });
+                }, (err) => console.error("Battle sync error", err));
+
+                // 2. 定期上傳自己的狀態到雲端 (每100ms同步一次位置)
+                if(this.syncInterval) clearInterval(this.syncInterval);
+                this.syncInterval = setInterval(() => this.syncLocalPlayerState(), 100);
+            }
+
+            // 傳送自己狀態
+            async syncLocalPlayerState() {
+                if(!currentUser || !this.player) return;
+                try {
+                    const myRef = doc(db, 'artifacts', appId, 'public', 'data', 'battle_players', currentUser.uid);
+                    await setDoc(myRef, {
+                        x: Math.round(this.player.x), y: Math.round(this.player.y),
+                        angle: this.player.angle,
+                        hp: this.player.hp, maxHp: this.player.maxHp,
+                        charName: this.player.data.name, color: this.player.data.color,
+                        lastShootTime: this.player.lastShootTime,
+                        lastShootType: this.player.lastShootType || 'normal',
+                        timestamp: Date.now()
+                    });
+                } catch(e) {}
+            }
+
+            // 產生別人的子彈
+            spawnRemoteBullet(remoteData) {
+                const dmg = remoteData.lastShootType === 'super' ? 1500 : 500;
+                if(remoteData.lastShootType === 'super') {
+                    for(let i=-1; i<=1; i++) this.bullets.push({x:remoteData.x, y:remoteData.y, angle:remoteData.angle+i*0.2, speed:20, dmg:dmg, life:60, team:'remote', color:'#fcd307', ownerId: remoteData.id});
+                } else {
+                    this.bullets.push({x:remoteData.x, y:remoteData.y, angle:remoteData.angle, speed:22, dmg:dmg, life:60, team:'remote', color: remoteData.color, ownerId: remoteData.id});
+                }
+            }
+
+            spawnEnemy() { // 保留 V8 敵人
+                this.enemies.push({ 
+                    x: 100 + Math.random()*(this.mapW-200), y: 100 + Math.random()*400, 
+                    radius: 25, hp: 3000, maxHp: 3000, speed: 3 + Math.random()*2, 
+                    team: 'red', cd: 60, targetAngle: 0 
+                }); 
+            }
+
+            updateScoreUI() {
+                document.getElementById('score-blue').innerText = this.scoreBlue;
+                document.getElementById('score-red').innerText = this.scoreRed;
+            }
+
+            // 保留 V8 實體碰撞檢測 (AABB與圓形簡單混合)
+            checkObstacleCollision(x, y, radius) {
+                for(let r of this.obstacles) {
+                    let testX = x; let testY = y;
+                    if (x < r.x) testX = r.x; else if (x > r.x + r.w) testX = r.x + r.w;
+                    if (y < r.y) testY = r.y; else if (y > r.y + r.h) testY = r.y + r.h;
+                    let distX = x - testX; let distY = y - testY;
+                    let distance = Math.sqrt((distX*distX) + (distY*distY));
+                    if (distance <= radius) return true;
+                }
+                return false;
+            }
+
+            updateBattle() {
+                const p = this.player;
+                if(!p) return;
+
+                // --- 遊戲計時 (保留 V8) ---
+                if (this.timeRemaining > 0) {
+                    this.timeRemaining--;
+                    if (this.timeRemaining % 60 === 0) {
+                        const secs = this.timeRemaining / 60;
+                        const m = Math.floor(secs / 60).toString().padStart(2, '0');
+                        const s = (secs % 60).toString().padStart(2, '0');
+                        document.getElementById('game-timer').innerText = `${m}:${s}`;
+                    }
+                } else {
+                    this.endGame('TIME UP', '#fff');
+                    return;
+                }
+
+                // --- 玩家移動與邊界、障礙物碰撞 (保留 V8) ---
+                let dx = window.Input.move.x; let dy = window.Input.move.y;
+                if(window.Input.keys['w']) dy = -1; if(window.Input.keys['s']) dy = 1; if(window.Input.keys['a']) dx = -1; if(window.Input.keys['d']) dx = 1;
+                
+                if(dx!=0 || dy!=0) { 
+                    const l = Math.hypot(dx,dy); 
+                    const moveX = (dx/l)*p.speed;
+                    const moveY = (dy/l)*p.speed;
+                    
+                    p.x += moveX;
+                    if(p.x < p.radius) p.x = p.radius; if(p.x > this.mapW - p.radius) p.x = this.mapW - p.radius;
+                    if(this.checkObstacleCollision(p.x, p.y, p.radius)) p.x -= moveX; 
+
+                    p.y += moveY;
+                    if(p.y < p.radius) p.y = p.radius; if(p.y > this.mapH - p.radius) p.y = this.mapH - p.radius;
+                    if(this.checkObstacleCollision(p.x, p.y, p.radius)) p.y -= moveY;
+                    
+                    p.angle = Math.atan2(dy, dx); 
+                }
+
+                // --- 玩家瞄準與射擊 ---
+                let wantShoot = false;
+                if(window.Input.touchR) p.angle = Math.atan2(window.Input.aim.y, window.Input.aim.x);
+                else if(window.Input.aim.active) { 
+                    const scX = canvas.width/2, scY = canvas.height/2; 
+                    p.angle = Math.atan2(window.Input.aim.mousePos.y - scY, window.Input.aim.mousePos.x - scX); 
+                    if(window.Input.aim.mouseDown) wantShoot = true;
+                }
+                if(window.Input.aim.fire) { wantShoot = true; window.Input.aim.fire = false; }
+
+                if(p.cd.atk > 0) p.cd.atk--; 
+                else if(wantShoot) { 
+                    this.fireBullet(p, p.data.atk, 'normal'); 
+                    p.cd.atk = p.maxCd.atk; 
+                }
+                
+                if(window.Input.btnGadget && p.cd.e <= 0) { p.hp = Math.min(p.maxHp, p.hp+1000); this.showDmg(p.x, p.y, '+1000', '#0f0'); p.cd.e = p.maxCd.e; }
+                if(window.Input.btnSuper && p.superCharge >= 100) { this.fireBullet(p, {dmg:1500, type:'super'}, 'super'); p.superCharge = 0; }
+
+                // --- 子彈邏輯與傷害計算 (V9 升級：支援打其他玩家) ---
+                this.bullets.forEach((b,i) => {
+                    b.life--; 
+                    if(b.life<=0) { this.bullets.splice(i,1); return; }
+                    
+                    b.x += Math.cos(b.angle)*b.speed; 
+                    b.y += Math.sin(b.angle)*b.speed;
+                    
+                    // 子彈打到牆壁
+                    if(this.checkObstacleCollision(b.x, b.y, 5)) { b.life = 0; return; }
+                    
+                    // 子彈擊中判定
+                    let hitTarget = null;
+                    if(b.team === 'blue') {
+                        // 我的子彈打本地 AI
+                        this.enemies.forEach(e => { if(Math.hypot(b.x-e.x, b.y-e.y) < e.radius + 10) hitTarget = e; });
+                        
+                        // V9: 我的子彈打其他真實玩家 (只顯示傷害，血量由他們自己扣，防作弊/衝突)
+                        Object.values(this.otherPlayers).forEach(op => {
+                            if(Math.hypot(b.x-op.x, b.y-op.y) < 20 + 10) {
+                                this.showDmg(op.x, op.y, b.dmg, '#ffeb3b');
+                                b.life = 0;
+                                p.superCharge = Math.min(100, p.superCharge+15);
+                            }
+                        });
+                    } 
+                    else if (b.team === 'red') {
+                        // AI 敵人子彈打我
+                        if(Math.hypot(b.x-p.x, b.y-p.y) < p.radius + 10) hitTarget = p;
+                    } 
+                    else if (b.team === 'remote') {
+                        // V9: 其他真實玩家的子彈打我！(我真正扣血)
+                        if(Math.hypot(b.x-p.x, b.y-p.y) < p.radius + 10) hitTarget = p;
+                    }
+
+                    if(hitTarget) {
+                        hitTarget.hp -= b.dmg; 
+                        this.showDmg(hitTarget.x, hitTarget.y, b.dmg, (b.team === 'blue' || b.team === 'remote') ? '#fff' : '#f44336');
+                        b.life = 0;
+
+                        if(b.team === 'blue') p.superCharge = Math.min(100, p.superCharge+15);
+
+                        // 死亡判定
+                        if(hitTarget.hp <= 0) {
+                            if(hitTarget === p) {
+                                this.endGame('DEFEAT', '#f44336');
+                            } else {
+                                this.enemies.splice(this.enemies.indexOf(hitTarget), 1); 
+                                this.scoreBlue += 1;
+                                this.updateScoreUI();
+                                setTimeout(() => this.spawnEnemy(), 2000);
+                            }
+                        }
+                    }
+                });
+                
+                // --- 本地 AI 敵人 (保留 V8) ---
+                this.enemies.forEach(e => {
+                    let d = Math.hypot(p.x-e.x, p.y-e.y);
+                    if(d > 250) { 
+                        let edx = (p.x-e.x)/d * e.speed; let edy = (p.y-e.y)/d * e.speed; 
+                        e.x += edx; e.y += edy; 
+                        if(this.checkObstacleCollision(e.x, e.y, e.radius)) { e.x -= edx; e.y -= edy; e.x += (Math.random()-0.5)*10; e.y += (Math.random()-0.5)*10;}
+                    } else {
+                        if(e.cd <= 0) {
+                            const ang = Math.atan2(p.y-e.y, p.x-e.x) + (Math.random()-0.5)*0.2;
+                            this.bullets.push({x: e.x, y: e.y, angle: ang, speed: 12, dmg: 350, life: 80, team: e.team});
+                            e.cd = 60 + Math.random()*40;
+                        }
+                    }
+                    if(e.cd > 0) e.cd--;
+                });
+
+                // 鏡頭跟隨
+                this.camera.x = p.x - canvas.width/2/this.camera.zoom;
+                this.camera.y = p.y - canvas.height/2/this.camera.zoom;
+                
+                if(p.superCharge >= 100) document.getElementById('btn-super').classList.add('ready'); 
+                else document.getElementById('btn-super').classList.remove('ready');
+            }
+
+            fireBullet(actor, skill, typeStr) {
+                const dmg = skill.dmg || 500;
+                // V9: 記錄開火動作到玩家狀態中，讓雲端其他玩家看到
+                actor.lastShootTime = Date.now();
+                actor.lastShootType = typeStr;
+
+                if(skill.type === 'super') {
+                    for(let i=-1; i<=1; i++) this.bullets.push({x:actor.x, y:actor.y, angle:actor.angle+i*0.2, speed:20, dmg:dmg, life:60, team:actor.team, color:'#fcd307'});
+                } else {
+                    this.bullets.push({x:actor.x, y:actor.y, angle:actor.angle, speed:22, dmg:dmg, life:60, team:actor.team});
+                }
+            }
+
+            async endGame(titleText, color) {
+                this.state = 2;
+                document.getElementById('battle-ui').style.display = 'none';
+                const overlay = document.getElementById('game-over-overlay');
+                overlay.style.display = 'flex';
+                const title = document.getElementById('result-title');
+                title.innerText = titleText;
+                title.style.color = color;
+                document.getElementById('final-score').innerText = this.scoreBlue;
+
+                // V9: 結束時清除自己的雲端戰鬥資料與計時器
+                if(this.syncInterval) clearInterval(this.syncInterval);
+                if(this.unsubscribeBattle) this.unsubscribeBattle();
+                if(currentUser) {
+                    try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'battle_players', currentUser.uid)); } catch(e){}
+                }
+            }
+
+            returnToLobby() {
+                this.state = 0;
+                document.getElementById('game-over-overlay').style.display = 'none';
+                document.getElementById('lobby-ui').style.display = 'flex';
+                this.joinLobby(); 
+            }
+
+            showDmg(x, y, val, color='#fff') {
+                const el = document.createElement('div'); el.className = 'dmg-num'; el.innerText = val; el.style.color = color;
+                const screenX = (x - this.camera.x) * this.camera.zoom;
+                const screenY = (y - this.camera.y) * this.camera.zoom;
+                el.style.left = screenX + 'px'; el.style.top = screenY + 'px';
+                document.getElementById('damage-container').appendChild(el);
+                setTimeout(() => el.remove(), 800);
+            }
+
+            // ================= 渲染迴圈 =================
+            startGameLoop() {
+                const loop = () => {
+                    this.draw();
+                    if(this.state === 1) this.updateBattle();
+                    requestAnimationFrame(loop);
+                };
+                loop();
+            }
+
+            draw() {
+                if(this.state === 0) this.drawLobby();
+                else if(this.state === 1) this.drawBattle();
+            }
+
+            drawLobby() { // 保留 V8 3D大廳繪圖
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const c = ROSTER[this.selChar];
+                const grd = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 50, canvas.width/2, canvas.height/2, 600);
+                grd.addColorStop(0, '#222'); grd.addColorStop(1, '#000');
+                ctx.fillStyle = grd; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+                const cx = canvas.width/2; const cy = canvas.height/2 - 50;
+                if(window.Input.rotateLobby) this.lobbyAngle += 0.1; else this.lobbyAngle += 0.02;
+
+                ctx.save(); ctx.translate(cx, cy); ctx.scale(3, 3);
+                ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.ellipse(0, 60, 40, 10, 0, 0, Math.PI*2); ctx.fill();
+
+                const sin = Math.sin(this.lobbyAngle); const cos = Math.cos(this.lobbyAngle);
+                ctx.fillStyle = c.color; ctx.fillRect(-20, -20, 40, 60); 
+                ctx.fillStyle = 'rgba(0,0,0,0.2)'; if(sin > 0) ctx.fillRect(0, -20, 20, 60);
+                
+                ctx.fillStyle = '#ffccbc'; ctx.beginPath(); ctx.arc(0, -30, 25, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#444'; ctx.fillRect(25 * cos - 10, 10 + 10 * sin, 30, 15);
+                ctx.fillStyle = '#222';
+                ctx.beginPath(); ctx.arc(-15, 40 + 5*sin, 10, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(15, 40 - 5*sin, 10, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+            }
+
+            drawBattle() {
+                const z = this.camera.zoom;
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                ctx.save();
+                ctx.scale(z, z);
+                ctx.translate(-this.camera.x, -this.camera.y);
+
+                // 地板與網格 (保留 V8)
+                ctx.fillStyle = '#6d4c41'; ctx.fillRect(0,0,this.mapW,this.mapH);
+                ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.lineWidth=2; ctx.beginPath();
+                for(let i=0; i<this.mapW; i+=100) { ctx.moveTo(i,0); ctx.lineTo(i,this.mapH); } 
+                for(let i=0; i<this.mapH; i+=100) { ctx.moveTo(0,i); ctx.lineTo(this.mapW,i); } 
+                ctx.stroke();
+
+                // 邊界高光 (保留 V8)
+                ctx.strokeStyle = '#f44336'; ctx.lineWidth = 10; ctx.strokeRect(0,0,this.mapW,this.mapH);
+
+                // 障礙物牆壁 (保留 V8)
+                ctx.fillStyle = '#424242';
+                this.obstacles.forEach(o => {
+                    ctx.fillRect(o.x, o.y, o.w, o.h);
+                    ctx.fillStyle = '#616161'; ctx.fillRect(o.x, o.y-10, o.w, 10);
+                    ctx.fillStyle = '#424242';
+                });
+
+                // === V9: 繪製其他真實玩家 ===
+                Object.values(this.otherPlayers).forEach(op => {
+                    if(op.hp <= 0) return;
+                    ctx.save(); ctx.translate(op.x, op.y); ctx.rotate(op.angle);
+                    
+                    ctx.fillStyle = op.color || '#fff'; ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#333'; ctx.fillRect(10, -5, 25, 10); // 槍
+                    ctx.restore();
+                    
+                    // 真實玩家血條
+                    ctx.fillStyle = '#f00'; ctx.fillRect(op.x-25, op.y-35, 50, 6);
+                    ctx.fillStyle = '#00bcd4'; ctx.fillRect(op.x-25, op.y-35, 50*(op.hp/op.maxHp), 6);
+                    // 顯示名字與玩家標記
+                    ctx.fillStyle = '#4facfe'; ctx.font="bold 12px Arial"; ctx.textAlign="center";
+                    ctx.fillText(op.charName.split('·')[1] || "Player", op.x, op.y-45);
+                });
+
+                // 本地 AI 敵人 (保留 V8)
+                this.enemies.forEach(e => {
+                    ctx.fillStyle = '#f44336'; ctx.beginPath(); ctx.arc(e.x, e.y, e.radius, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(e.x + 10, e.y - 5, 5, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#f00'; ctx.fillRect(e.x-20, e.y-40, 40, 5);
+                    ctx.fillStyle = '#0f0'; ctx.fillRect(e.x-20, e.y-40, 40*(e.hp/e.maxHp), 5);
+                });
+
+                // 自己 (保留 V8)
+                if(this.player && this.player.hp > 0) {
+                    const p = this.player;
+                    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
+                    
+                    if(window.Input.touchR || window.Input.aim.active) {
+                        ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth=3; ctx.setLineDash([15, 15]);
+                        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(600, 0); ctx.stroke(); ctx.setLineDash([]);
+                    }
+                    
+                    ctx.fillStyle = p.data.color; ctx.beginPath(); ctx.arc(0, 0, p.radius, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#333'; ctx.fillRect(10, -5, 25, 10);
+                    if(p.superCharge >= 100) { ctx.strokeStyle = '#fcd307'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(0,0,p.radius+5,0,Math.PI*2); ctx.stroke(); }
+                    ctx.restore();
+                    
+                    ctx.fillStyle = '#f00'; ctx.fillRect(p.x-25, p.y-45, 50, 6);
+                    ctx.fillStyle = '#00e676'; ctx.fillRect(p.x-25, p.y-45, 50*(p.hp/p.maxHp), 6);
+                    ctx.fillStyle = '#fff'; ctx.font="bold 14px Arial"; ctx.textAlign="center";
+                    ctx.fillText("You", p.x, p.y-55);
+                }
+
+                // 子彈 (保留 V8)
+                this.bullets.forEach(b => {
+                    ctx.fillStyle = b.color || (b.team==='blue'?'#00e676':'#ff5252');
+                    ctx.beginPath(); ctx.arc(b.x, b.y, 8, 0, Math.PI*2); ctx.fill();
+                    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 10; ctx.fill(); ctx.shadowBlur = 0;
+                });
+
+                ctx.restore();
+            }
+        }
+
+        // 初始化遊戲與 Firebase
+        window.game = new window.Game();
+        window.game.initAuthAndData();
+
+    </script>
+</body>
+</html>
