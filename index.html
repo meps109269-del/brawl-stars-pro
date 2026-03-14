@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title> 荒野亂鬥 PRO - V21 無懈可擊版 </title>
+    <title>荒野亂鬥 PRO - V21 無懈可擊版</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
     <style>
         :root { --primary: #fcd307; --secondary: #e91e63; --panel-bg: rgba(15, 15, 25, 0.95); --text-main: #ffffff; }
@@ -12,289 +12,501 @@
         canvas { display: block; width: 100vw; height: 100vh; position: absolute; top:0; left:0; z-index: 1; }
 
         .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; z-index: 10; }
-        
-        #lobby-ui { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0,0,0,0.4); pointer-events: auto;}
-        .title-box { font-size: 3rem; color: var(--primary); font-weight: bold; text-shadow: 0 4px 10px rgba(0,0,0,0.8); margin-bottom: 30px; }
-        .btn { pointer-events: auto; padding: 15px 30px; font-size: 1.2rem; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.1s; margin: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
-        .btn:active { transform: scale(0.95); }
-        
-        #battle-ui { display: none; width: 100%; height: 100%; position: absolute; top: 0; pointer-events: none; }
-        
-        /* Joysticks */
-        .joystick { position: absolute; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 50%; bottom: 30px; pointer-events: auto; touch-action: none; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
-        #joy-left { left: 30px; }
-        #joy-right { right: 130px; } /* 為大絕按鈕留空間 */
-        .joy-knob { width: 40px; height: 40px; background: rgba(255,255,255,0.7); border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.5); pointer-events: none; }
+        .interactive { pointer-events: auto; }
 
-        /* Super Skill Button */
-        #btn-super { position: absolute; bottom: 50px; right: 30px; width: 80px; height: 80px; border-radius: 50%; background: #555; pointer-events: auto; opacity: 0.5; border: 3px solid #333; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; color: #fff; text-shadow: 1px 1px 2px #000; transition: all 0.2s;}
-        #btn-super.ready { background: var(--primary); opacity: 1; border-color: #fff; box-shadow: 0 0 20px var(--primary); cursor: pointer; color: #000; text-shadow: none;}
-
-        #game-over-overlay { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); z-index: 20; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto;}
-        #result-title { font-size: 4rem; margin-bottom: 20px; }
-        .stats { font-size: 1.5rem; margin-bottom: 10px; }
+        .btn { background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%); border: 2px solid #fff; border-radius: 8px; padding: 10px 20px; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #005cbf; text-align: center; transition: 0.1s; }
+        .btn:active { transform: translateY(4px); box-shadow: 0 0 0; }
+        .btn:disabled, .btn.disabled { background: linear-gradient(180deg, #9e9e9e 0%, #616161 100%); box-shadow: 0 4px 0 #424242; cursor: not-allowed; color: #ccc; border-color: #999; }
         
-        #damage-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15; overflow: hidden; }
-        .dmg-num { position: absolute; font-weight: 900; font-size: 24px; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; pointer-events: none; animation: floatUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1.5); } 100% { opacity: 0; transform: translateY(-50px) scale(1); } }
+        .btn-yellow { background: linear-gradient(180deg, #ff9800 0%, #ffc107 100%); box-shadow: 0 4px 0 #b36b00; }
+        .btn-green { background: linear-gradient(180deg, #4caf50 0%, #8bc34a 100%); box-shadow: 0 4px 0 #2e7d32; }
+        .btn-blue { background: linear-gradient(180deg, #2196f3 0%, #1976d2 100%); box-shadow: 0 4px 0 #0d47a1; }
+        .btn-gray { background: linear-gradient(180deg, #9e9e9e 0%, #757575 100%); box-shadow: 0 4px 0 #424242; }
+        .btn-icon { border-radius: 5px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); border: 1px solid #fff; cursor: pointer; transition: 0.2s; }
+        .btn-icon:active { background: #fff; color: #000; }
+
+        #start-screen { display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); z-index: 100; flex-direction: column; backdrop-filter: blur(5px); }
+        .game-title { font-size: 4rem; font-weight: 900; color: #fcd307; text-shadow: 0 0 20px rgba(252,211,7,0.8), 3px 3px 0 #000; margin-bottom: 10px; text-align: center; line-height: 1.2; }
+        .main-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 90%; max-width: 450px; margin-top: 30px; }
+        .main-menu-grid .btn { padding: 25px 10px; font-size: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 15px; border-width: 3px; }
+        .menu-icon { font-size: 2.5rem; margin-bottom: 5px; }
+
+        #lobby-ui { display: none; }
+        .top-bar { display: flex; justify-content: space-between; padding: 10px 20px; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); align-items: center; }
+        .gold-display { background: rgba(0,0,0,0.6); border: 2px solid #fcd307; padding: 5px 15px; border-radius: 20px; color: #fcd307; font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; gap: 5px; }
+        
+        .selector-container { position: absolute; top: 50%; width: 100%; display: flex; flex-direction: column; align-items: center; pointer-events: none; gap: 10px; }
+        .selector-box { display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 30px; pointer-events: auto; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(5px); min-width: 340px; }
+        .selector-row { display: flex; width: 100%; justify-content: space-between; align-items: center; }
+        .arrow-btn { font-size: 1.5rem; color: white; cursor: pointer; padding: 0 15px; }
+        .bottom-nav { position: absolute; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 10px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); align-items: flex-end; }
+
+        .lobby-players-box { position: absolute; top: 80px; right: 20px; background: rgba(0,0,0,0.8); border: 2px solid #4facfe; border-radius: 10px; padding: 15px; width: 250px; pointer-events: auto; box-shadow: 0 0 15px rgba(79, 172, 254, 0.5); display: none; }
+        .lobby-players-title { font-size: 1rem; color: #4facfe; margin-bottom: 10px; border-bottom: 1px solid #555; padding-bottom: 5px; font-weight: bold; display: flex; justify-content: space-between; }
+
+        .modal { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index: 500; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-content { background: var(--panel-bg); border: 2px solid var(--primary); padding: 25px; border-radius: 15px; max-width: 350px; width: 90%; text-align: left; pointer-events: auto; box-shadow: 0 0 20px rgba(252, 211, 7, 0.3); }
+        .modal h2 { color: var(--primary); margin-top: 0; text-align: center; font-size: 1.5rem; border-bottom: 1px solid #555; padding-bottom: 10px; }
+        .close-btn { background: #f44336; border: 2px solid #fff; color: white; padding: 10px; border-radius: 8px; width: 100%; margin-top: 20px; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
+
+        .roster-modal-content { max-width: 800px; width: 95%; height: 80%; display: flex; flex-direction: column; padding: 15px; }
+        .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px; overflow-y: auto; touch-action: pan-y; padding-right: 5px; flex-grow: 1; }
+        .roster-item { width: 100%; aspect-ratio: 1; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; text-align: center; border: 2px solid #555; position: relative; overflow: hidden; background: #222; flex-direction: column; padding: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        .roster-item.selected { border-color: var(--primary); box-shadow: 0 0 10px var(--primary); transform: scale(1.05); z-index: 2; }
+        .roster-item .r-color { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #fff; margin-bottom: 3px; }
+        
+        #lobby-3d-placeholder { position: absolute; top: 10%; left: 0; width: 100%; height: 40%; pointer-events: auto; }
+
+        #battle-ui { display: none; }
+        .battle-header { position: absolute; top: 10px; width: 100%; display: flex; justify-content: center; gap: 20px; font-weight: bold; text-shadow: 1px 1px 2px #000; font-size: 1.2rem; }
+        .score-box { background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; border: 2px solid #fff; min-width: 80px; text-align: center; transition: 0.3s; }
+        
+        .joystick-area { position: absolute; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); pointer-events: auto; touch-action: none; transition: opacity 0.3s; }
+        .joystick-knob { position: absolute; width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.8); top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        #stick-l { bottom: 50px; left: 50px; }
+        #stick-r { bottom: 50px; right: 50px; border-color: rgba(255,0,0,0.3); }
+        #stick-r .joystick-knob { background: rgba(255,100,100,0.8); }
+
+        .skill-group { position: absolute; bottom: 60px; right: 220px; display: flex; flex-direction: column; gap: 15px; align-items: flex-end; pointer-events: auto; }
+        .action-btn { width: 60px; height: 60px; border-radius: 50%; background: #222; border: 3px solid #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.5); position: relative; }
+        .btn-super { width: 90px; height: 90px; border-color: #fcd307; color: #fcd307; background: rgba(255, 215, 0, 0.2); }
+        .btn-super.ready { background: #fcd307; color: #000; box-shadow: 0 0 20px #fcd307; animation: pulse 1s infinite; }
+        .btn-gadget { width: 50px; height: 50px; border-color: #00e676; color: #00e676; }
+        
+        #damage-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 50; }
+        .dmg-num { position: absolute; font-weight: 900; font-size: 1.5rem; text-shadow: 1px 1px 0 #000; animation: floatUp 0.8s forwards; pointer-events: none; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-50px) scale(1.2); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        .toast { position: absolute; top: 25%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); border: 2px solid var(--primary); color: #fff; padding: 15px 30px; border-radius: 30px; pointer-events: none; opacity: 0; transition: 0.3s; z-index: 300; font-size: 1.2rem; font-weight: bold; box-shadow: 0 5px 20px rgba(0,0,0,0.8); text-align: center; white-space: nowrap; }
+        
+        #game-over-overlay { display: none; background: rgba(0,0,0,0.9); z-index: 200; align-items: center; justify-content: center; flex-direction: column; }
+        .desktop-hide { display: none !important; }
+
     </style>
 </head>
 <body>
+
     <canvas id="gameCanvas"></canvas>
-    
-    <div class="ui-layer" id="lobby-ui">
-        <div class="title-box">荒野亂鬥 PRO</div>
-        <p style="color:#aaa; margin-bottom: 20px;">V21 無懈可擊版 - AI 重構</p>
-        <button class="btn" onclick="game.startGame('single')">單人模式 (開始討伐)</button>
-    </div>
-
-    <div class="ui-layer" id="battle-ui">
-        <div id="joy-left" class="joystick"><div class="joy-knob" id="knob-left"></div></div>
-        <div id="joy-right" class="joystick"><div class="joy-knob" id="knob-right"></div></div>
-        <div id="btn-super" onclick="game.useSuper()">大絕</div>
-    </div>
-
     <div id="damage-container"></div>
+    <div id="toast" class="toast">提示訊息</div>
 
-    <div class="ui-layer" id="game-over-overlay">
-        <h1 id="result-title">遊戲結束</h1>
-        <div class="stats">擊殺分數: <span id="final-score" style="color:var(--primary);">0</span></div>
-        <div class="stats">獲得金幣: <span id="earned-gold" style="color:#4caf50;">0</span></div>
-        <br>
-        <button class="btn" onclick="game.hostReturnToLobby()">返回大廳</button>
+    <div id="help-modal" class="modal interactive">
+        <div class="modal-content">
+            <h2>🎮 操作說明</h2>
+            <div style="margin-bottom: 15px; font-size: 0.95rem; line-height: 1.5;">
+                <b style="color:#4facfe; font-size: 1.1rem;">💻 電腦版：</b><br>
+                • <b style="color:#fff;">W A S D</b> : 上下左右移動<br>
+                • <b style="color:#fff;">滑鼠游標</b> : 控制瞄準方向<br>
+                • <b style="color:#fff;">滑鼠左鍵</b> : 點擊/長按射擊<br>
+                • <b style="color:#fff;">E 鍵</b> : 施放武裝配件 (補血)<br>
+                • <b style="color:#fff;">R 鍵</b> : 施放終極大絕 (需集氣)
+            </div>
+            <div style="font-size: 0.95rem; line-height: 1.5;">
+                <b style="color:#00e676; font-size: 1.1rem;">📱 手機/平板版：</b><br>
+                • <b style="color:#fff;">左側搖桿</b> : 拖曳移動<br>
+                • <b style="color:#fff;">右側搖桿</b> : 拖曳瞄準，<b>放開射擊</b><br>
+                • <b style="color:#fff;">輕觸右搖桿</b> : 自動鎖定最近敵人<br>
+                • <b style="color:#fff;">畫面按鈕</b> : 點擊施放道具與大絕
+            </div>
+            <button class="close-btn" onclick="document.getElementById('help-modal').style.display='none'">我知道了！</button>
+        </div>
+    </div>
+
+    <div id="roster-modal" class="modal interactive">
+        <div class="modal-content roster-modal-content">
+            <h2>👥 選擇英雄 (90名)</h2>
+            <div id="roster-grid" class="roster-grid"></div>
+            <button class="close-btn" onclick="document.getElementById('roster-modal').style.display='none'">關閉</button>
+        </div>
+    </div>
+
+    <div id="start-screen" class="ui-layer interactive">
+        <div class="game-title">荒野亂鬥<br>PRO</div>
+        <div style="color: #00e676; font-size: 1.2rem; font-weight: bold; text-shadow: 1px 1px 0 #000; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 10px;">V21 無懈可擊連線版</div>
+        
+        <div class="main-menu-grid">
+            <div class="btn btn-yellow" onclick="window.game.enterLobby('single')"><span class="menu-icon">⚔️</span>單人遊戲</div>
+            <div class="btn btn-blue" onclick="window.game.enterLobby('multi')"><span class="menu-icon">🌐</span>多人遊戲</div>
+            <div class="btn btn-green" onclick="window.game.enterLobby('upgrade')"><span class="menu-icon">⬆️</span>角色升級</div>
+            <div class="btn btn-gray" onclick="document.getElementById('help-modal').style.display='flex'"><span class="menu-icon">❓</span>操作說明</div>
+        </div>
+    </div>
+
+    <div id="lobby-ui" class="ui-layer">
+        <div class="top-bar interactive">
+            <div class="btn-icon" onclick="window.game.backToMenu()" style="padding: 6px 15px; font-size: 1rem; color: #fff; border-radius: 8px;">🏠 返回主選單</div>
+            <div class="gold-display">💰 <span id="lobby-gold-text">0</span></div>
+        </div>
+
+        <div class="lobby-players-box" id="lobby-players-box">
+            <div class="lobby-players-title"><span>🌐 房間連線</span><span id="player-count">👤 1/4</span></div>
+            <div id="connection-status" style="font-size: 0.9rem; margin-bottom: 10px; color: #ffeb3b; white-space: pre-wrap;">請建立或加入房間</div>
+            <button class="btn btn-yellow" id="btn-create-room" onclick="window.game.createRoom()" style="width: 100%; padding: 5px; font-size: 0.9rem; margin-bottom: 10px;">👑 建立房間 (當房主)</button>
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="room-input" placeholder="代碼" style="width: 60%; background: #222; color: #fff; border: 1px solid #555; border-radius: 4px; padding: 5px; text-transform: uppercase;">
+                <button class="btn" id="btn-join-room" onclick="window.game.joinRoom()" style="width: 40%; padding: 5px; font-size: 0.9rem;">🔗 加入</button>
+            </div>
+        </div>
+
+        <div id="lobby-3d-placeholder" class="interactive" onmousedown="window.Input.rotateLobby=true" onmouseup="window.Input.rotateLobby=false" ontouchstart="window.Input.rotateLobby=true" ontouchend="window.Input.rotateLobby=false"></div>
+
+        <div class="selector-container">
+            <div class="selector-box">
+                <div class="selector-row">
+                    <div class="arrow-btn" onclick="window.game.prevChar()">◀</div>
+                    <div style="text-align:center;">
+                        <div id="lobby-char-name" style="color:#00e676; font-size:1.5rem; font-weight:bold;">R1 衝鋒兵·泰德</div>
+                        <div style="color:#aaa; font-size:0.85rem; margin-top: 3px;">
+                            LV <span id="lobby-char-lvl" style="color:#fff; font-weight:bold;">1</span> 
+                            (血: <span id="lobby-char-hp">6000</span> / 攻: <span id="lobby-char-atk">550</span>)
+                        </div>
+                        <div class="btn btn-icon interactive" style="padding:4px 10px; margin-top:8px; font-size:0.85rem; width:100%;" onclick="window.game.openRoster()">📄 英雄列表 (90名)</div>
+                    </div>
+                    <div class="arrow-btn" onclick="window.game.nextChar()">▶</div>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button class="btn btn-green interactive" id="btn-upgrade" onclick="window.game.upgradeChar()" style="padding: 5px 15px;">⬆ 升級 (💰 <span id="upgrade-cost">100</span>)</button>
+                </div>
+            </div>
+            <div class="selector-box" style="margin-top:5px; padding: 10px; min-width: 250px;">
+                <div class="selector-row">
+                    <div class="arrow-btn" onclick="window.game.prevMode()">◀</div>
+                    <div style="text-align:center;"><div id="lobby-mode-name" style="color:#ff9800; font-size:1.2rem; font-weight:bold;">亂鬥競技場</div></div>
+                    <div class="arrow-btn" onclick="window.game.nextMode()">▶</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-nav interactive">
+            <button class="btn btn-yellow" id="btn-start-battle" onclick="window.game.hostStartBattle()" style="width:250px; height:60px; font-size:1.4rem; line-height:36px; box-shadow: 0 0 15px rgba(255,193,7,0.5);">⚔ 開始對戰</button>
+        </div>
+    </div>
+
+    <div id="battle-ui" class="ui-layer">
+        <div class="battle-header">
+            <div class="score-box" id="score-blue" style="color:#2979ff">0</div>
+            <div class="score-box" id="game-timer" style="color:#fff; min-width:100px;">03:00</div>
+            <div class="score-box" id="score-red" style="color:#f44336">0</div>
+        </div>
+
+        <div id="stick-l" class="joystick-area"><div class="joystick-knob" id="knob-l"></div></div>
+        <div id="stick-r" class="joystick-area"><div class="joystick-knob" id="knob-r"></div></div>
+
+        <div class="skill-group">
+            <div class="action-btn btn-gadget" id="btn-gadget" onmousedown="window.Input.btnGadget=true" ontouchstart="window.Input.btnGadget=true">G</div>
+            <div class="action-btn btn-super" id="btn-super" onmousedown="window.Input.btnSuper=true" ontouchstart="window.Input.btnSuper=true">☠</div>
+        </div>
+    </div>
+
+    <div id="game-over-overlay" class="ui-layer interactive">
+        <div class="result-title" id="result-title" style="font-size:4rem; font-weight:900; color:#fcd307; margin-bottom:10px;">VICTORY!</div>
+        <div style="font-size: 1.5rem; margin-bottom: 10px;">最終得分: <span id="final-score">0</span></div>
+        <div style="font-size: 1.5rem; margin-bottom: 30px; color: #fcd307; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 10px; border: 1px solid #fcd307;">
+            獲得金幣: +<span id="earned-gold">0</span> 💰
+        </div>
+        <div class="btn btn-yellow" onclick="window.game.hostReturnToLobby()" id="btn-return-lobby" style="font-size:1.2rem;">返回大廳</div>
     </div>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-        window.addEventListener('resize', resize);
-        resize();
-
-        // 存檔系統
-        let savedData = { gold: 0 };
-        function saveGame() { localStorage.setItem('brawl_save', JSON.stringify(savedData)); }
-        try { if(localStorage.getItem('brawl_save')) savedData = JSON.parse(localStorage.getItem('brawl_save')); } catch(e){}
-
-        // 角色設定
         const ROSTER = [
-            { name: '神槍手·藍', color: '#2196f3', maxHp: 1500, speed: 6, maxAmmo: 3, reloadSpeed: 50, dmg: 400, fireRate: 15 }
+            { id: 'r1', name: '衝鋒兵·泰德', color: '#4caf50', hp: 6000, speed: 6, atk: { dmg: 550, cd: 0.8 } },
+            { id: 'r2', name: '火槍手·艾莉', color: '#ff5722', hp: 3800, speed: 6.5, atk: { dmg: 520, cd: 1.0 } },
+            { id: 'r3', name: '炸彈人·布魯', color: '#795548', hp: 4200, speed: 5.8, atk: { dmg: 650, cd: 1.2 } },
+            { id: 'r11', name: '冰霜射手·雪莉', color: '#00bcd4', hp: 3700, speed: 6, atk: { dmg: 520, cd: 1.0 } },
+            { id: 'r99', name: '光束大師·雷', color: '#e040fb', hp: 3500, speed: 7, atk: { dmg: 80, cd: 0.2 } }
         ];
 
-        // 搖桿全域輸入
-        window.Input = { x: 0, y: 0, aim: { active: false, x: 0, y: 0 }, touchR: false, rotateLobby: false };
+        function seededRandom(seed) { let x = Math.sin(seed) * 10000; return x - Math.floor(x); }
+        const prefixes = ["狂戰士", "神槍手", "大魔導", "幻影", "鋼鐵", "爆破", "神聖", "幽冥", "風暴", "毒霧", "烈焰", "寒冰", "雷霆", "大地", "星辰", "深淵", "混沌", "秩序", "光明", "暗影", "機甲", "野獸", "巨龍", "死神", "天使", "血刃"];
+        const suffixes = ["亞瑟", "蘭斯", "梅林", "莉莉", "凱文", "艾瑪", "傑克", "露西", "奧丁", "索爾", "洛基", "弗蕾雅", "宙斯", "阿波羅", "雅典娜", "阿瑞斯", "諾亞", "摩西", "大衛", "所羅門", "悟空", "八戒", "沙僧", "唐僧"];
 
-        const setupJoystick = (zoneId, knobId, isAim) => {
-            const zone = document.getElementById(zoneId);
-            const knob = document.getElementById(knobId);
-            let active = false, baseRect = null;
-            
-            const handleDown = (e) => {
-                e.preventDefault(); active = true; baseRect = zone.getBoundingClientRect();
-                if(isAim) { window.Input.touchR = true; window.Input.aim.active = true; }
-                update(e);
-            };
-            const handleMove = (e) => { if(active) update(e); };
-            const handleUp = (e) => {
-                active = false; knob.style.transform = `translate(0px, 0px)`;
-                if(isAim) { window.Input.aim.active = false; window.Input.touchR = false; }
-                else { window.Input.x = 0; window.Input.y = 0; }
-            };
-            const update = (e) => {
-                let cx = baseRect.left + baseRect.width/2, cy = baseRect.top + baseRect.height/2;
-                let clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                let clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                let tx = clientX - cx, ty = clientY - cy;
-                let dist = Math.hypot(tx, ty);
-                let maxDist = baseRect.width/2 - 20;
-                if(dist > maxDist) { tx = (tx/dist)*maxDist; ty = (ty/dist)*maxDist; }
-                knob.style.transform = `translate(${tx}px, ${ty}px)`;
-                
-                let nx = tx/maxDist, ny = ty/maxDist;
-                if(isAim) { window.Input.aim.x = nx; window.Input.aim.y = ny; }
-                else { window.Input.x = nx; window.Input.y = ny; }
-            };
-            zone.addEventListener('touchstart', handleDown, {passive:false}); zone.addEventListener('touchmove', handleMove, {passive:false}); zone.addEventListener('touchend', handleUp);
-            zone.addEventListener('mousedown', handleDown); document.addEventListener('mousemove', handleMove); document.addEventListener('mouseup', handleUp);
+        for (let i = 6; i <= 90; i++) {
+            let seed = i * 1337; let prefix = prefixes[Math.floor(seededRandom(seed) * prefixes.length)]; let suffix = suffixes[Math.floor(seededRandom(seed+1) * suffixes.length)];
+            let type = i % 4; let hp, speed, dmg, cd;
+            if (type === 0) { hp = 6000 + Math.floor(seededRandom(seed+2) * 2500); speed = 5 + seededRandom(seed+3) * 0.8; dmg = 800 + Math.floor(seededRandom(seed+4) * 400); cd = 1.2 + seededRandom(seed+5) * 0.8; } 
+            else if (type === 1) { hp = 3500 + Math.floor(seededRandom(seed+2) * 1000); speed = 6.8 + seededRandom(seed+3) * 1.2; dmg = 400 + Math.floor(seededRandom(seed+4) * 300); cd = 0.5 + seededRandom(seed+5) * 0.5; } 
+            else if (type === 2) { hp = 2800 + Math.floor(seededRandom(seed+2) * 1200); speed = 5.8 + seededRandom(seed+3) * 0.6; dmg = 600 + Math.floor(seededRandom(seed+4) * 500); cd = 0.8 + seededRandom(seed+5) * 0.6; } 
+            else { hp = 4000 + Math.floor(seededRandom(seed+2) * 1500); speed = 6 + seededRandom(seed+3) * 0.5; dmg = 500 + Math.floor(seededRandom(seed+4) * 300); cd = 0.9 + seededRandom(seed+5) * 0.5; }
+            let r = Math.floor(50 + seededRandom(seed+6)*200); let g = Math.floor(50 + seededRandom(seed+7)*200); let b = Math.floor(50 + seededRandom(seed+8)*200);
+            ROSTER.push({ id: 'c' + i, name: `${prefix}·${suffix}`, color: `rgb(${r},${g},${b})`, hp: hp, speed: speed, atk: { dmg: dmg, cd: cd } });
+        }
+
+        const MODES = [ { id: 'arena', name: '亂鬥競技場', desc: '多人連線生存', color: '#ff9800' } ];
+        let savedData = JSON.parse(localStorage.getItem('BrawlProData_V17')) || { gold: 1000, levels: { r1: 1, r2: 1, r3: 1, r11: 1, r99: 1 } };
+        function saveGame() { localStorage.setItem('BrawlProData_V17', JSON.stringify(savedData)); }
+
+        window.Input = {
+            move: { x: 0, y: 0, active: false }, aim: { x: 0, y: 0, angle: 0, active: false, isAuto: false, fire: false }, 
+            keys: {}, rotateLobby: false, touchL: null, touchR: null, originL: {x:0, y:0}, originR: {x:0, y:0}, btnSuper: false, btnGadget: false,
+            init() {
+                window.addEventListener('keydown', e => this.keys[e.key.toLowerCase()] = true); window.addEventListener('keyup', e => this.keys[e.key.toLowerCase()] = false);
+                window.addEventListener('mousemove', e => { if(!this.touchR) { this.aim.mousePos = { x: e.clientX, y: e.clientY }; this.aim.active = true; } });
+                window.addEventListener('mousedown', (e) => { if(e.target.tagName !== 'CANVAS') return; if(!this.touchR) this.aim.mouseDown = true; });
+                window.addEventListener('mouseup', () => { if(!this.touchR) this.aim.mouseDown = false; });
+                const elL = document.getElementById('stick-l'); const elR = document.getElementById('stick-r');
+                elL.addEventListener('touchstart', e => { e.preventDefault(); for(let t of e.changedTouches) { if(!this.touchL) { this.touchL = t.identifier; const r = elL.getBoundingClientRect(); this.originL = {x: r.left+r.width/2, y: r.top+r.height/2}; this.updateStick(t, 'l'); } } }, {passive: false});
+                elR.addEventListener('touchstart', e => { e.preventDefault(); for(let t of e.changedTouches) { if(!this.touchR) { this.touchR = t.identifier; const r = elR.getBoundingClientRect(); this.originR = {x: r.left+r.width/2, y: r.top+r.height/2}; this.aim.isAuto=false; this.updateStick(t, 'r'); } } }, {passive: false});
+                document.addEventListener('touchmove', e => { for(let t of e.changedTouches) { if(t.identifier === this.touchL) { e.preventDefault(); this.updateStick(t, 'l'); } if(t.identifier === this.touchR) { e.preventDefault(); this.updateStick(t, 'r'); } } }, {passive: false});
+                const handleTouchEnd = (e) => { for(let t of e.changedTouches) { if(t.identifier === this.touchL) { this.touchL = null; this.move = {x:0, y:0, active:false}; this.resetKnob('l'); } if(t.identifier === this.touchR) { if(Math.hypot(this.aim.x, this.aim.y) < 0.2) this.aim.isAuto = true; else { this.aim.fire = true; this.aim.angle = Math.atan2(this.aim.y, this.aim.x); } this.touchR = null; this.aim.active=false; this.resetKnob('r'); } } };
+                document.addEventListener('touchend', handleTouchEnd); document.addEventListener('touchcancel', handleTouchEnd);
+            },
+            updateStick(touch, side) {
+                const origin = side === 'l' ? this.originL : this.originR; const maxDist = 50; let dx = touch.clientX - origin.x, dy = touch.clientY - origin.y;
+                const dist = Math.hypot(dx, dy); if(dist > maxDist) { dx = (dx/dist)*maxDist; dy = (dy/dist)*maxDist; }
+                document.getElementById('knob-'+side).style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                if(side === 'l') { this.move = { x: dx/maxDist, y: dy/maxDist, active: true }; } else { this.aim.x = dx/maxDist; this.aim.y = dy/maxDist; this.aim.active = true; }
+            },
+            resetKnob(side) { document.getElementById('knob-'+side).style.transform = `translate(-50%, -50%)`; }
         };
 
-        setupJoystick('joy-left', 'knob-left', false);
-        setupJoystick('joy-right', 'knob-right', true);
+        const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight; window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
 
-        // 遊戲主引擎
-        class Game {
+        window.Game = class {
             constructor() {
-                this.state = 0; // 0=大廳, 1=戰鬥, 2=結算
-                this.selChar = 0;
-                this.lobbyAngle = 0;
-                this.scoreBlue = 0;
-                this.myId = Math.random().toString(36).substr(2, 9);
-                this.isHost = true;
-                this.isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+                this.state = -1; this.player = null; this.myId = Math.random().toString(36).substring(2, 9);
+                this.otherPlayers = {}; this.enemies = []; this.bullets = [];
+                this.selChar = 0; this.selMode = 0; this.lobbyAngle = 0; this.camera = {x:0, y:0, zoom:1};
+                this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || ('ontouchstart' in window);
                 this.currentLobbyMode = 'single';
-                this.otherPlayers = {};
-                this.camera = { x: 0, y: 0, zoom: 1 };
-                this.mapW = 2400;
-                this.mapH = 2400;
-                this.obstacles = [];
-                this.enemies = [];
-                this.bullets = [];
+                if (!this.isMobile) { document.getElementById('stick-l').classList.add('desktop-hide'); document.getElementById('stick-r').classList.add('desktop-hide'); document.getElementById('btn-gadget').classList.add('desktop-hide'); document.getElementById('btn-super').classList.add('desktop-hide'); }
                 
-                // 生成障礙物
-                for(let i=0; i<20; i++) {
-                    this.obstacles.push({
-                        x: Math.random()*(this.mapW-300)+150, y: Math.random()*(this.mapH-300)+150,
-                        w: Math.random()*150+50, h: Math.random()*150+50
-                    });
-                }
-                this.startGameLoop();
+                this.mapW = 2000; this.mapH = 1500;
+                this.obstacles = [ {x: 400, y: 300, w: 200, h: 100}, {x: 1400, y: 1100, w: 200, h: 100}, {x: 950, y: 500, w: 100, h: 500}, {x: 200, y: 800, w: 150, h: 150}, {x: 1650, y: 400, w: 150, h: 150} ];
+                this.scoreBlue = 0; this.scoreRed = 0; this.timeRemaining = 180 * 60;
+                this.peer = null; this.conns = []; this.isHost = false; this.roomId = ''; this.syncInterval = null;
+
+                window.Input.init(); this.initRosterGrid(); this.startGameLoop();
             }
 
             enterLobby(mode) {
-                this.state = 0;
-                document.getElementById('lobby-ui').style.display = 'flex';
-                document.getElementById('battle-ui').style.display = 'none';
+                this.state = 0; this.currentLobbyMode = mode;
+                document.getElementById('start-screen').style.display = 'none'; document.getElementById('lobby-ui').style.display = 'flex';
+                const mpBox = document.getElementById('lobby-players-box'); const btnStart = document.getElementById('btn-start-battle');
+                if (this.peer) { this.peer.destroy(); this.peer = null; }
+                this.conns = []; this.isHost = false; this.otherPlayers = {};
+                document.getElementById('connection-status').innerText = '請建立或加入房間'; document.getElementById('player-count').innerText = '👤 1/4';
+
+                if (mode === 'single') { mpBox.style.display = 'none'; btnStart.innerText = '⚔ 開始單人對戰'; btnStart.disabled = false; btnStart.classList.remove('disabled'); } 
+                else if (mode === 'multi') { mpBox.style.display = 'block'; btnStart.innerText = '⚠️ 請先建立或加入房間'; btnStart.disabled = true; btnStart.classList.add('disabled'); } 
+                else if (mode === 'upgrade') { mpBox.style.display = 'none'; btnStart.innerText = '⚔ 開始對戰'; btnStart.disabled = false; btnStart.classList.remove('disabled'); this.openRoster(); }
+                this.updateLobbyUI();
             }
 
-            updateLobbyUI() {}
-
-            startGame(mode) {
-                this.state = 1;
-                this.currentLobbyMode = mode;
-                document.getElementById('lobby-ui').style.display = 'none';
-                document.getElementById('battle-ui').style.display = 'block';
-                document.getElementById('game-over-overlay').style.display = 'none';
-                
-                let c = ROSTER[this.selChar];
-                this.player = {
-                    x: this.mapW/2, y: this.mapH/2, radius: 22, 
-                    hp: c.maxHp, maxHp: c.maxHp, angle: 0, team: 'blue', data: c,
-                    superCharge: 0, ammo: c.maxAmmo, maxAmmo: c.maxAmmo,
-                    ammoReloadTimer: 0, ammoReloadMax: c.reloadSpeed, cd: 0
-                };
-                this.scoreBlue = 0;
-                this.enemies = [];
-                this.bullets = [];
-                if(this.isHost) {
-                    for(let i=0; i<6; i++) this.spawnEnemy();
-                }
+            backToMenu() {
+                this.state = -1; if(this.peer) { this.peer.destroy(); this.peer = null; }
+                document.getElementById('lobby-ui').style.display = 'none'; document.getElementById('start-screen').style.display = 'flex';
             }
 
-            useSuper() {
-                let p = this.player;
-                if(p.superCharge >= 100 && p.hp > 0) {
-                    p.superCharge = 0;
-                    this.fireBullet(p, { speed: 25, dmg: p.data.dmg * 2.5, color: '#fcd307', type: 'super' }, 'super');
-                    document.getElementById('btn-super').classList.remove('ready');
-                }
-            }
-
-            spawnEnemy() {
-                this.enemies.push({
-                    id: Math.random().toString(36).substr(2, 9),
-                    x: Math.random() > 0.5 ? Math.random()*300 : this.mapW - Math.random()*300, 
-                    y: Math.random() > 0.5 ? Math.random()*300 : this.mapH - Math.random()*300,
-                    hp: 1200, maxHp: 1200, radius: 25, team: 'red', color: '#e91e63',
-                    speed: 4 + Math.random(), cd: 0, comboQueue: [], comboTimer: 0,
-                    dashTimer: 0, dashAngle: 0, dashSpeed: 0, pauseTimer: 0, moveStyle: 'CircleStrafe',
-                    styleTimer: 0, strafeDir: Math.random()>0.5?1:-1, randomAng: 0
+            initRosterGrid() {
+                const grid = document.getElementById('roster-grid'); grid.innerHTML = '';
+                ROSTER.forEach((c, index) => {
+                    const item = document.createElement('div'); item.className = 'roster-item'; item.id = `roster-item-${index}`; item.onclick = () => this.selectCharFromGrid(index);
+                    const colorCircle = document.createElement('div'); colorCircle.className = 'r-color'; colorCircle.style.backgroundColor = c.color;
+                    const nameLabel = document.createElement('div'); nameLabel.className = 'r-name'; nameLabel.innerText = c.name.split('·')[1] || c.name; 
+                    item.appendChild(colorCircle); item.appendChild(nameLabel); grid.appendChild(item);
                 });
             }
 
-            broadcast(data) { /* Mockup for P2P Broadcast */ }
-            updateScoreUI() { /* Mockup */ }
-
-            checkObstacleCollision(x, y, r) {
-                for(let o of this.obstacles) {
-                    if(x+r > o.x && x-r < o.x+o.w && y+r > o.y && y-r < o.y+o.h) return true;
-                }
-                return false;
+            openRoster() { document.getElementById('roster-modal').style.display = 'flex'; document.querySelectorAll('.roster-item').forEach(el => el.classList.remove('selected')); const cur = document.getElementById(`roster-item-${this.selChar}`); if(cur) { cur.classList.add('selected'); cur.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }
+            selectCharFromGrid(index) { this.selChar = index; this.updateLobbyUI(); document.getElementById('roster-modal').style.display = 'none'; }
+            upgradeChar() { const char = ROSTER[this.selChar]; const currentLevel = savedData.levels[char.id] || 1; const cost = currentLevel * 100; if(savedData.gold >= cost) { savedData.gold -= cost; savedData.levels[char.id] = currentLevel + 1; saveGame(); this.updateLobbyUI(); this.showToast(`✨ 升級至 Level ${currentLevel + 1}!`); } else { this.showToast("❌ 金幣不足！"); } }
+            prevChar() { this.selChar = (this.selChar-1+ROSTER.length)%ROSTER.length; this.updateLobbyUI(); } nextChar() { this.selChar = (this.selChar+1)%ROSTER.length; this.updateLobbyUI(); }
+            prevMode() { this.selMode = (this.selMode-1+MODES.length)%MODES.length; this.updateLobbyUI(); } nextMode() { this.selMode = (this.selMode+1)%MODES.length; this.updateLobbyUI(); }
+            
+            updateLobbyUI() {
+                const c = ROSTER[this.selChar]; const m = MODES[this.selMode];
+                document.getElementById('lobby-char-name').innerText = c.name; document.getElementById('lobby-char-name').style.color = c.color; document.getElementById('lobby-mode-name').innerText = m.name; document.getElementById('lobby-gold-text').innerText = savedData.gold;
+                const lvl = savedData.levels[c.id] || 1; const multiplier = 1 + (lvl - 1) * 0.1;
+                document.getElementById('lobby-char-lvl').innerText = lvl; document.getElementById('lobby-char-hp').innerText = Math.floor(c.hp * multiplier); document.getElementById('lobby-char-atk').innerText = Math.floor(c.atk.dmg * multiplier);
+                const cost = lvl * 100; document.getElementById('upgrade-cost').innerText = cost; const btn = document.getElementById('btn-upgrade'); if(savedData.gold >= cost) { btn.style.filter = "grayscale(0%)"; btn.style.pointerEvents = "auto"; } else { btn.style.filter = "grayscale(80%)"; }
             }
 
-            checkObstacleLineOfSight(x1, y1, x2, y2) {
-                let steps = 15;
-                for(let i=0; i<=steps; i++) {
-                    let tx = x1 + (x2-x1)*(i/steps);
-                    let ty = y1 + (y2-y1)*(i/steps);
-                    for(let o of this.obstacles) {
-                        if(tx > o.x && tx < o.x+o.w && ty > o.y && ty < o.y+o.h) return true; // Blocked
+            showToast(msg, duration = 3000) { const t = document.getElementById('toast'); t.innerText = msg; t.style.opacity = 1; if (this.toastTimer) clearTimeout(this.toastTimer); this.toastTimer = setTimeout(() => t.style.opacity = 0, duration); }
+
+            createRoom() {
+                this.isHost = true; this.roomId = Math.random().toString(36).substring(2, 6).toUpperCase(); 
+                if(this.peer) this.peer.destroy(); this.peer = new Peer(this.roomId);
+                const status = document.getElementById('connection-status'); status.innerText = `準備中...`;
+                const btnStart = document.getElementById('btn-start-battle'); btnStart.innerText = '⚔ 開始對戰 (房主)'; btnStart.disabled = false; btnStart.classList.remove('disabled');
+
+                this.peer.on('open', (id) => { status.innerText = `✅ 您的房間代碼: ${id}\n請把代碼告訴朋友！`; });
+                this.peer.on('connection', (conn) => { 
+                    this.conns.push(conn); this.setupConnection(conn); 
+                    conn.on('open', () => { // Bug 5 Fix: Drop-in 中途參戰支援
+                        status.innerText = `✅ 代碼: ${this.roomId}\n👥 朋友已加入！`; document.getElementById('player-count').innerText = `👤 ${this.conns.length + 1}/4`; this.showToast("✨ 朋友加入房間！"); 
+                        if (this.state === 1) { setTimeout(() => { conn.send({ type: 'start_battle' }); }, 500); }
+                    });
+                });
+                this.peer.on('error', (err) => { this.showToast("❌ 建立連線失敗"); status.innerText = "請重新建立房間"; });
+            }
+            
+            joinRoom() {
+                const inputId = document.getElementById('room-input').value.toUpperCase(); if(!inputId) return this.showToast("請輸入代碼！");
+                this.isHost = false; if(this.peer) this.peer.destroy(); this.peer = new Peer(); 
+                const status = document.getElementById('connection-status'); status.innerText = "連線尋找中...";
+                this.peer.on('open', () => { 
+                    const conn = this.peer.connect(inputId); this.conns = [conn]; this.setupConnection(conn); 
+                    conn.on('open', () => { 
+                        status.innerText = `✅ 已成功加入: ${inputId}`; document.getElementById('player-count').innerText = `👤 加入成功`; this.showToast("✅ 加入成功！等待房主開始"); 
+                        const btnStart = document.getElementById('btn-start-battle'); btnStart.innerText = '⏳ 等待房主開始遊戲...'; btnStart.disabled = true; btnStart.classList.add('disabled');
+                    }); 
+                });
+                this.peer.on('error', (err) => { this.showToast("❌ 找不到該房間代碼！"); status.innerText = "連線失敗，請檢查代碼"; });
+            }
+
+            setupConnection(conn) {
+                conn.on('data', (data) => {
+                    if (data.type === 'start_battle') { this.startBattle(false); }
+                    else if (data.type === 'game_over') { this.endGame(data.titleText, data.color, data.isVictory, data.score); }
+                    else if (data.type === 'return_lobby') { this.state = 0; this.updateLobbyUI(); document.getElementById('game-over-overlay').style.display = 'none'; this.enterLobby('multi'); }
+                    else if (data.type === 'state') { 
+                        let op = this.otherPlayers[data.id];
+                        if (!op) { this.otherPlayers[data.id] = data.player; this.otherPlayers[data.id].targetX = data.player.x; this.otherPlayers[data.id].targetY = data.player.y; } 
+                        else { op.targetX = data.player.x; op.targetY = data.player.y; op.angle = data.player.angle; op.hp = data.player.hp; op.ammo = data.player.ammo; op.isDead = data.player.isDead; op.charName = data.player.charName; op.color = data.player.color; op.maxAmmo = data.player.maxAmmo; op.ammoReloadPct = data.player.ammoReloadPct; } 
                     }
-                }
-                return false;
+                    else if (data.type === 'shoot') { this.spawnRemoteBullet(data); }
+                    else if (data.type === 'ai_sync' && !this.isHost) { 
+                        this.scoreBlue = data.scoreBlue; this.scoreRed = data.scoreRed; this.updateScoreUI(); this.timeRemaining = data.timeRemaining;
+                        data.enemies.forEach(serverEnemy => {
+                            let localEnemy = this.enemies.find(e => e.id === serverEnemy.id);
+                            if (localEnemy) { localEnemy.targetX = serverEnemy.x; localEnemy.targetY = serverEnemy.y; localEnemy.hp = serverEnemy.hp; localEnemy.maxHp = serverEnemy.maxHp; localEnemy.dashTimer = serverEnemy.dashTimer; localEnemy.pauseTimer = serverEnemy.pauseTimer; localEnemy.dashAngle = serverEnemy.dashAngle; } 
+                            else { serverEnemy.targetX = serverEnemy.x; serverEnemy.targetY = serverEnemy.y; this.enemies.push(serverEnemy); }
+                        });
+                        this.enemies = this.enemies.filter(e => data.enemies.find(se => se.id === e.id));
+                    }
+                    else if (data.type === 'damage_player') { if (data.targetId === this.myId && this.player) { this.player.hp -= data.dmg; this.showDmg(this.player.x, this.player.y, data.dmg, '#f44336'); } }
+                    else if (data.type === 'damage_ai' && this.isHost) { const e = this.enemies.find(en => en.id === data.aiId); if(e) { e.hp -= data.dmg; if(e.hp <= 0) this.checkEnemyDeath(e); } }
+                });
+                conn.on('close', () => {
+                    this.showToast("⚠️ 一位玩家已斷線離線"); this.conns = this.conns.filter(c => c !== conn);
+                    if(this.state === 0) { document.getElementById('player-count').innerText = `👤 ${this.conns.length + 1}/4`; document.getElementById('connection-status').innerText = `連線已斷開`; }
+                    Object.keys(this.otherPlayers).forEach(id => { if(!this.conns.find(c => c.peer === id)) delete this.otherPlayers[id]; });
+                });
             }
+            broadcast(data) { this.conns.forEach(conn => { if(conn && conn.open) conn.send(data); }); }
+
+            hostStartBattle() { if(this.currentLobbyMode === 'multi' && !this.isHost) return; this.broadcast({ type: 'start_battle' }); this.startBattle(true); }
+
+            startBattle(isInitiator) {
+                this.state = 1; document.getElementById('lobby-ui').style.display = 'none'; document.getElementById('battle-ui').style.display = 'block'; document.getElementById('game-over-overlay').style.display = 'none';
+                document.getElementById('stick-l').style.opacity = 1; document.getElementById('stick-l').style.pointerEvents = 'auto'; // 確保死後重來的透明度恢復
+                
+                const c = ROSTER[this.selChar]; const lvl = savedData.levels[c.id] || 1; const multiplier = 1 + (lvl - 1) * 0.1;
+                const realHp = Math.floor(c.hp * multiplier); const realAtk = Math.floor(c.atk.dmg * multiplier);
+                
+                this.player = { 
+                    x: Math.random() * 500 + 100, y: this.mapH - 200, radius: 20, hp: realHp, maxHp: realHp, isDeadMarked: false,
+                    speed: c.speed, angle: -Math.PI/2, data: c, team: 'blue', atkDmg: realAtk, superCharge: 0, 
+                    ammo: 3, maxAmmo: 3, ammoReloadTimer: 0, ammoReloadMax: c.atk.cd * 60, shotCooldown: 0,
+                    cd: {e:0, r:0}, maxCd: {e:1000, r:100} 
+                };
+                
+                const btnReturn = document.getElementById('btn-return-lobby');
+                if (!this.isHost && this.currentLobbyMode === 'multi') { btnReturn.innerText = '等待房主返回...'; btnReturn.style.pointerEvents = 'none'; btnReturn.style.filter = 'grayscale(100%)'; }
+                else { btnReturn.innerText = '返回大廳'; btnReturn.style.pointerEvents = 'auto'; btnReturn.style.filter = 'none'; }
+
+                this.enemies = []; this.bullets = []; this.otherPlayers = {}; this.scoreBlue = 0; this.scoreRed = 0; this.timeRemaining = 180 * 60;
+                if(this.isHost || this.currentLobbyMode !== 'multi') { for(let i=0; i<4; i++) this.spawnEnemy(); }
+                this.updateScoreUI();
+                if(this.syncInterval) clearInterval(this.syncInterval); this.syncInterval = setInterval(() => this.networkSyncLoop(), 50);
+
+                this.showToast(this.isMobile ? "💡 提示：左搖桿移動，右搖桿拖曳瞄準放開射擊" : "💡 提示：WASD移動，滑鼠瞄準並點擊左鍵射擊", 4000);
+            }
+
+            networkSyncLoop() {
+                if(this.state !== 1) return;
+                if(this.player) this.broadcast({ type: 'state', id: this.myId, player: { x: this.player.x, y: this.player.y, angle: this.player.angle, hp: this.player.hp, maxHp: this.player.maxHp, charName: this.player.data.name, color: this.player.data.color, ammo: this.player.ammo, maxAmmo: this.player.maxAmmo, ammoReloadPct: this.player.ammoReloadTimer / this.player.ammoReloadMax, isDead: this.player.hp <= 0 } });
+                if(this.isHost) this.broadcast({ type: 'ai_sync', enemies: this.enemies, scoreBlue: this.scoreBlue, scoreRed: this.scoreRed, timeRemaining: this.timeRemaining });
+            }
+
+            spawnEnemy() { 
+                const moveStyles = ['CircleStrafe', 'ZigZag', 'Kite', 'Erratic', 'Ambush']; const randomChar = ROSTER[Math.floor(Math.random() * ROSTER.length)];
+                this.enemies.push({ id: Math.random().toString(36).substr(2, 5), x: 100 + Math.random()*(this.mapW-200), y: 100 + Math.random()*400, radius: 25, hp: randomChar.hp * 0.8, maxHp: randomChar.hp * 0.8, speed: randomChar.speed * 0.8, team: 'red', cd: 60, targetAngle: 0, color: randomChar.color, moveStyle: moveStyles[Math.floor(Math.random()*moveStyles.length)], styleTimer: 0, strafeDir: (Math.random()>0.5?1:-1), randomAng: 0, comboQueue: [], comboTimer: 0, dashTimer: 0, dashAngle: 0, dashSpeed: 0, pauseTimer: 0 }); 
+            }
+            updateScoreUI() { document.getElementById('score-blue').innerText = this.scoreBlue; document.getElementById('score-red').innerText = this.scoreRed; }
+            checkObstacleCollision(x, y, radius) { for(let r of this.obstacles) { let testX = Math.max(r.x, Math.min(x, r.x + r.w)); let testY = Math.max(r.y, Math.min(y, r.y + r.h)); if (Math.hypot(x - testX, y - testY) <= radius) return true; } return false; }
+            checkObstacleLineOfSight(x1, y1, x2, y2) { const steps = 15; for(let i=1; i<=steps; i++) { let tx = x1 + (x2 - x1) * (i / steps); let ty = y1 + (y2 - y1) * (i / steps); for(let r of this.obstacles) { if (tx >= r.x && tx <= r.x + r.w && ty >= r.y && ty <= r.y + r.h) return true; } } return false; }
 
             updateBattle() {
-                const p = this.player;
-                
-                // 本地玩家移動與射擊
-                if (p.hp > 0) {
-                    let dx = window.Input.x * p.data.speed;
-                    let dy = window.Input.y * p.data.speed;
-                    p.x += dx;
-                    if(p.x < p.radius || p.x > this.mapW - p.radius || this.checkObstacleCollision(p.x, p.y, p.radius)) p.x -= dx;
-                    p.y += dy;
-                    if(p.y < p.radius || p.y > this.mapH - p.radius || this.checkObstacleCollision(p.x, p.y, p.radius)) p.y -= dy;
+                Object.values(this.otherPlayers).forEach(op => { if (op.targetX !== undefined) { op.x += (op.targetX - op.x) * 0.4; op.y += (op.targetY - op.y) * 0.4; } });
+                if (!this.isHost && this.currentLobbyMode === 'multi') { this.enemies.forEach(e => { if (e.targetX !== undefined) { e.x += (e.targetX - e.x) * 0.4; e.y += (e.targetY - e.y) * 0.4; } }); }
 
-                    if (window.Input.aim.active) {
-                        p.angle = Math.atan2(window.Input.aim.y, window.Input.aim.x);
-                        if (p.cd <= 0 && p.ammo > 0) {
-                            this.fireBullet(p, { speed: 22, dmg: p.data.dmg, color: '#00e676', type: 'normal' }, 'normal');
-                            p.ammo--;
-                            p.cd = p.data.fireRate;
-                        }
-                    }
+                const p = this.player; if(!p) return;
 
-                    if (p.ammo < p.maxAmmo) {
-                        p.ammoReloadTimer++;
-                        p.ammoReloadPct = p.ammoReloadTimer / p.ammoReloadMax;
-                        if(p.ammoReloadTimer >= p.ammoReloadMax) {
-                            p.ammo++;
-                            p.ammoReloadTimer = 0;
-                        }
-                    }
-                    if (p.cd > 0) p.cd--;
-                } else {
-                    this.endGame("你被擊敗了！", "#f44336", false);
+                if (this.isHost || this.currentLobbyMode !== 'multi') { 
+                    if (this.timeRemaining > 0) { this.timeRemaining--; } 
+                    else if (this.timeRemaining === 0) { this.timeRemaining = -1; this.endGame('TIME UP', '#fff', true); return; } 
+                }
+                if (this.timeRemaining >= 0) {
+                    const secs = Math.ceil(this.timeRemaining / 60); 
+                    document.getElementById('game-timer').innerText = `${Math.floor(secs/60).toString().padStart(2, '0')}:${(secs%60).toString().padStart(2, '0')}`;
                 }
 
-                // 子彈邏輯
-                for(let i = this.bullets.length - 1; i >= 0; i--) {
+                // Bug 1 Fix: 房主死亡不再拖大家下水，改為全滅判定與幽靈觀戰模式
+                if (p.hp <= 0 && !p.isDeadMarked) {
+                    p.isDeadMarked = true;
+                    this.showToast("💀 你陣亡了！正在觀戰隊友...", 99999);
+                    document.getElementById('stick-l').style.opacity = 0.2; document.getElementById('stick-l').style.pointerEvents = 'none';
+                }
+
+                if (this.isHost || this.currentLobbyMode !== 'multi') {
+                    let allDead = (p.hp <= 0);
+                    if (this.currentLobbyMode === 'multi') { Object.values(this.otherPlayers).forEach(op => { if (op.hp > 0 && !op.isDead) allDead = false; }); }
+                    if (allDead && this.state === 1) { this.timeRemaining = -1; this.endGame('DEFEAT', '#f44336', false); return; }
+                }
+
+                if (p.hp > 0) {
+                    let wantGadget = window.Input.btnGadget || window.Input.keys['e']; let wantSuper = window.Input.btnSuper || window.Input.keys['r'];
+                    window.Input.btnGadget = false; window.Input.btnSuper = false; window.Input.keys['e'] = false; window.Input.keys['r'] = false;
+
+                    let dx = window.Input.move.x; let dy = window.Input.move.y;
+                    if(window.Input.keys['w']) dy = -1; if(window.Input.keys['s']) dy = 1; if(window.Input.keys['a']) dx = -1; if(window.Input.keys['d']) dx = 1;
+                    if(dx!=0 || dy!=0) { const l = Math.hypot(dx,dy); const moveX = (dx/l)*p.speed; const moveY = (dy/l)*p.speed; p.x += moveX; if(p.x < p.radius || p.x > this.mapW - p.radius || this.checkObstacleCollision(p.x, p.y, p.radius)) p.x -= moveX; p.y += moveY; if(p.y < p.radius || p.y > this.mapH - p.radius || this.checkObstacleCollision(p.x, p.y, p.radius)) p.y -= moveY; p.angle = Math.atan2(dy, dx); }
+                    
+                    let wantShoot = false;
+                    if(window.Input.touchR) { p.angle = Math.atan2(window.Input.aim.y, window.Input.aim.x); } 
+                    else if (window.Input.aim.fire) { p.angle = window.Input.aim.angle; wantShoot = true; window.Input.aim.fire = false; } 
+                    else if (window.Input.aim.isAuto) { let closest = null; let minDist = 800; this.enemies.forEach(e => { let d = Math.hypot(e.x - p.x, e.y - p.y); if(d < minDist && e.hp > 0 && !this.checkObstacleLineOfSight(p.x, p.y, e.x, e.y)) { minDist = d; closest = e; } }); if(closest) p.angle = Math.atan2(closest.y - p.y, closest.x - p.x); wantShoot = true; window.Input.aim.isAuto = false; }
+                    else if (!this.isMobile && window.Input.aim.active) { p.angle = Math.atan2(window.Input.aim.mousePos.y - canvas.height/2, window.Input.aim.mousePos.x - canvas.width/2); if(window.Input.aim.mouseDown) wantShoot = true; }
+                    
+                    if (p.ammo < p.maxAmmo) { p.ammoReloadTimer++; if (p.ammoReloadTimer >= p.ammoReloadMax) { p.ammo++; p.ammoReloadTimer = 0; } } else { p.ammoReloadTimer = 0; }
+                    if (p.shotCooldown > 0) p.shotCooldown--;
+                    if (wantShoot && p.ammo >= 1 && p.shotCooldown <= 0) { this.fireBullet(p, {dmg: p.atkDmg, speed: 22, color: p.data.color}, 'normal'); p.ammo--; p.shotCooldown = Math.min(12, p.ammoReloadMax * 0.8); }
+                    if(wantGadget && p.cd.e <= 0) { p.hp = Math.min(p.maxHp, p.hp+1000); this.showDmg(p.x, p.y, '+1000', '#0f0'); p.cd.e = p.maxCd.e; }
+                    if(wantSuper && p.superCharge >= 100) { this.fireBullet(p, {dmg: p.atkDmg * 2.5, speed: 20, type:'super', color: '#fcd307'}, 'super'); p.superCharge = 0; }
+                }
+
+                // Bug 4 Fix: 反向迴圈解決 splice 跳幀問題
+                for (let i = this.bullets.length - 1; i >= 0; i--) {
                     let b = this.bullets[i];
-                    b.x += Math.cos(b.angle) * b.speed;
-                    b.y += Math.sin(b.angle) * b.speed;
-                    b.life--;
-
-                    if (b.life <= 0 || b.x < 0 || b.x > this.mapW || b.y < 0 || b.y > this.mapH || this.checkObstacleCollision(b.x, b.y, 5)) {
-                        this.bullets.splice(i, 1);
-                        continue;
-                    }
-
-                    if (b.team === 'blue') {
-                        this.enemies.forEach(e => {
-                            if (e.hp > 0 && Math.hypot(b.x - e.x, b.y - e.y) < e.radius + 10) {
+                    b.life--; if(b.life<=0) { this.bullets.splice(i,1); continue; } 
+                    b.x += Math.cos(b.angle)*b.speed; b.y += Math.sin(b.angle)*b.speed; 
+                    if(this.checkObstacleCollision(b.x, b.y, 5)) { b.life = 0; continue; }
+                    
+                    if(b.ownerId === this.myId) { 
+                        this.enemies.forEach(e => { 
+                            if(e.hp > 0 && Math.hypot(b.x-e.x, b.y-e.y) < e.radius + 10) { 
+                                this.showDmg(e.x, e.y, b.dmg, '#fff'); b.life = 0; p.superCharge = Math.min(100, p.superCharge+15); 
                                 e.hp -= b.dmg;
-                                this.showDmg(e.x, e.y, b.dmg, '#fff');
-                                b.life = 0;
-                                if(p.superCharge < 100) p.superCharge = Math.min(100, p.superCharge + 15);
-                                
                                 // Bug 2 Fix: 客機只通知扣血，絕不自己幫房主宣告怪物死亡，避免幻影與分數閃爍
                                 if (!this.isHost && this.currentLobbyMode === 'multi') { this.broadcast({ type: 'damage_ai', aiId: e.id, dmg: b.dmg }); }
-                                else if (e.hp <= 0) { this.checkEnemyDeath(e); }
-                            }
-                        });
-                    }
-                    else if (b.team === 'red') {
-                        if(p.hp > 0 && Math.hypot(b.x-p.x, b.y-p.y) < p.radius + 10) {
-                            p.hp -= b.dmg; this.showDmg(p.x, p.y, b.dmg, '#f44336'); b.life = 0;
-                        }
+                                else if (e.hp <= 0) { this.checkEnemyDeath(e); } 
+                            } 
+                        }); 
+                    } 
+                    else if (b.team === 'red') { 
+                        if(p.hp > 0 && Math.hypot(b.x-p.x, b.y-p.y) < p.radius + 10) { 
+                            p.hp -= b.dmg; this.showDmg(p.x, p.y, b.dmg, '#f44336'); b.life = 0; 
+                        } 
                     }
                     // Bug 3 Fix: 隊友的子彈打到怪會有視覺消失效果，不會穿透
                     else if (b.team === 'remote') {
                         this.enemies.forEach(e => { if(e.hp > 0 && Math.hypot(b.x-e.x, b.y-e.y) < e.radius + 10) { b.life = 0; } });
                     }
                 }
-               
-                // AI 索敵與走位邏輯 (來自原始碼)
+                
                 if(this.isHost || this.currentLobbyMode !== 'multi') {
                     this.enemies.forEach(e => {
                         let targetX = p.x, targetY = p.y, targetHp = p.hp;
@@ -312,9 +524,9 @@
                         let dist = minDistToAnyPlayer; let angleToPlayer = Math.atan2(targetY-e.y, targetX-e.x); let isBlocked = this.checkObstacleLineOfSight(e.x, e.y, targetX, targetY);
                         let moveAng = angleToPlayer; let currentSpeed = e.speed;
                         if (e.comboQueue.length > 0) { if (e.comboTimer > 0) e.comboTimer--; else { let step = e.comboQueue.shift(); if(step.action === 'shoot') { this.aiFire(e, {x:targetX, y:targetY}, step.offset || 0, step.spd || 12, step.dmgMult || 1, step.clr || '#f44336'); } else if(step.action === 'dash') { e.dashTimer = step.dur; e.dashAngle = angleToPlayer + (step.angOffset || 0); e.dashSpeed = step.spd; } else if(step.action === 'pause') { e.pauseTimer = step.dur; } if(e.comboQueue.length > 0) e.comboTimer = e.comboQueue[0].delay; } }
-                        if (e.pauseTimer > 0) { e.pauseTimer--; currentSpeed = 0; } else if (e.dashTimer > 0) { e.dashTimer--; moveAng = e.dashAngle; currentSpeed = e.dashSpeed; }
+                        if (e.pauseTimer > 0) { e.pauseTimer--; currentSpeed = 0; } else if (e.dashTimer > 0) { e.dashTimer--; moveAng = e.dashAngle; currentSpeed = e.dashSpeed; } 
                         else {
-                            if (e.hp / e.maxHp < 0.3) { e.moveStyle = 'FleeCover'; if (isBlocked) { moveAng = angleToPlayer; currentSpeed *= 0.4; } else { let bestCoverDist = 9999; let hideX = e.x, hideY = e.y, foundCover = false; this.obstacles.forEach(o => { let ox = o.x + o.w/2; let oy = o.y + o.h/2; let angleFromPlayerToObs = Math.atan2(oy - targetY, ox - targetX); let hideDist = Math.max(o.w, o.h) / 2 + 50; let hx = ox + Math.cos(angleFromPlayerToObs) * hideDist; let hy = oy + Math.sin(angleFromPlayerToObs) * hideDist; if (Math.hypot(e.x - hx, e.y - hy) < bestCoverDist && Math.hypot(targetX - ox, targetY - oy) > 150) { bestCoverDist = Math.hypot(e.x - hx, e.y - hy); hideX = hx; hideY = hy; foundCover = true; } }); moveAng = foundCover ? Math.atan2(hideY - e.y, hideX - e.x) : angleToPlayer + Math.PI; } }
+                            if (e.hp / e.maxHp < 0.3) { e.moveStyle = 'FleeCover'; if (isBlocked) { moveAng = angleToPlayer; currentSpeed *= 0.4; } else { let bestCoverDist = 9999; let hideX = e.x, hideY = e.y, foundCover = false; this.obstacles.forEach(o => { let ox = o.x + o.w/2; let oy = o.y + o.h/2; let angleFromPlayerToObs = Math.atan2(oy - targetY, ox - targetX); let hideDist = Math.max(o.w, o.h) / 2 + 50; let hx = ox + Math.cos(angleFromPlayerToObs) * hideDist; let hy = oy + Math.sin(angleFromPlayerToObs) * hideDist; if (Math.hypot(e.x - hx, e.y - hy) < bestCoverDist && Math.hypot(targetX - ox, targetY - oy) > 150) { bestCoverDist = Math.hypot(e.x - hx, e.y - hy); hideX = hx; hideY = hy; foundCover = true; } }); moveAng = foundCover ? Math.atan2(hideY - e.y, hideX - e.x) : angleToPlayer + Math.PI; } } 
                             else {
                                 e.styleTimer--; if (e.styleTimer <= 0) { e.strafeDir *= -1; e.randomAng = Math.random() * Math.PI * 2; e.styleTimer = 30 + Math.random() * 40; }
                                 switch(e.moveStyle) { case 'CircleStrafe': if(dist < 200) moveAng = angleToPlayer + Math.PI; else if(dist > 350) moveAng = angleToPlayer; else moveAng = angleToPlayer + (Math.PI/2) * e.strafeDir; break; case 'ZigZag': moveAng = angleToPlayer + (Math.PI/3) * e.strafeDir; break; case 'Kite': if(dist < 350) { moveAng = angleToPlayer + Math.PI; currentSpeed *= 1.2; } else if(dist > 450) { moveAng = angleToPlayer; } else { moveAng = angleToPlayer + (Math.PI/2) * e.strafeDir; currentSpeed *= 0.5; } break; case 'Erratic': moveAng = e.randomAng; if(dist > 500) moveAng = angleToPlayer; break; case 'Ambush': if (dist < 200 || !isBlocked) { e.moveStyle = 'CircleStrafe'; } break; }
@@ -332,11 +544,10 @@
                         if(e.cd > 0) e.cd--;
                     });
                 }
-               
+                
                 // 觀戰鏡頭平滑跟隨
                 if (p.hp > 0) {
-                    this.camera.x += (p.x - canvas.width/2/this.camera.zoom - this.camera.x) * 0.2; 
-                    this.camera.y += (p.y - canvas.height/2/this.camera.zoom - this.camera.y) * 0.2;
+                    this.camera.x = p.x - canvas.width/2/this.camera.zoom; this.camera.y = p.y - canvas.height/2/this.camera.zoom;
                 } else {
                     let specTarget = Object.values(this.otherPlayers).find(op => op.hp > 0 && !op.isDead);
                     if (specTarget) {
@@ -348,32 +559,31 @@
                 if(p.superCharge >= 100 && p.hp > 0) document.getElementById('btn-super').classList.add('ready'); else document.getElementById('btn-super').classList.remove('ready');
             }
 
-            aiFire(e, target, offsetAng, speed, dmgMult, color) { const aimAng = Math.atan2(target.y-e.y, target.x-e.x) + offsetAng + (Math.random()-0.5)*0.1; const dmg = 250 * dmgMult; this.bullets.push({x: e.x, y: e.y, angle: aimAng, speed: speed, dmg: dmg, life: 80, team: e.team, color: color, ownerId: 'ai'}); this.broadcast({ type: 'shoot', ownerId: 'ai', team: e.team, x: e.x, y: e.y, angle: aimAng, dmg: dmg, speed: speed, color: color }); }
-            checkEnemyDeath(e) { this.enemies.splice(this.enemies.indexOf(e), 1); this.scoreBlue += 1; this.updateScoreUI(); setTimeout(() => { if (this.state === 1) this.spawnEnemy(); }, 1500); }
+            aiFire(e, target, offsetAng, speed, dmgMult, color) { const aimAng = Math.atan2(target.y-e.y, target.x-e.x) + offsetAng + (Math.random()-0.5)*0.1; const dmg = 350 * dmgMult; this.bullets.push({x: e.x, y: e.y, angle: aimAng, speed: speed, dmg: dmg, life: 80, team: e.team, color: color, ownerId: 'ai'}); this.broadcast({ type: 'shoot', ownerId: 'ai', team: e.team, x: e.x, y: e.y, angle: aimAng, dmg: dmg, speed: speed, color: color }); }
+            checkEnemyDeath(e) { this.enemies.splice(this.enemies.indexOf(e), 1); this.scoreBlue += 1; this.updateScoreUI(); setTimeout(() => { if (this.state === 1) this.spawnEnemy(); }, 2000); }
             fireBullet(actor, data, typeStr) { if(data.type === 'super') { for(let i=-1; i<=1; i++) this.bullets.push({x:actor.x, y:actor.y, angle:actor.angle+i*0.2, speed:data.speed, dmg:data.dmg, life:60, team:actor.team, color:data.color, ownerId: this.myId}); } else { this.bullets.push({x:actor.x, y:actor.y, angle:actor.angle, speed:data.speed, dmg:data.dmg, life:60, team:actor.team, color:data.color, ownerId: this.myId}); } this.broadcast({ type: 'shoot', ownerId: this.myId, team: actor.team, x: actor.x, y: actor.y, angle: actor.angle, dmg: data.dmg, speed: data.speed, color: data.color, shootType: typeStr }); }
             spawnRemoteBullet(data) { if(data.shootType === 'super') { for(let i=-1; i<=1; i++) this.bullets.push({x:data.x, y:data.y, angle:data.angle+i*0.2, speed:data.speed||20, dmg:data.dmg, life:60, team:'remote', color:data.color||'#fcd307', ownerId: data.ownerId}); } else { this.bullets.push({x:data.x, y:data.y, angle:data.angle, speed:data.speed||22, dmg:data.dmg, life:60, team:'remote', color: data.color||'#f44336', ownerId: data.ownerId}); } }
 
-            endGame(titleText, color, isVictory, forceScore = null) {
-                if (this.state === 2) return;
-                this.state = 2; document.getElementById('battle-ui').style.display = 'none'; document.getElementById('game-over-overlay').style.display = 'flex';
-                document.getElementById('result-title').innerText = titleText; document.getElementById('result-title').style.color = color;
-                if (forceScore !== null) this.scoreBlue = forceScore;
-                document.getElementById('final-score').innerText = this.scoreBlue;
-                let earned = this.scoreBlue * 15 + (isVictory ? 50 : 10); document.getElementById('earned-gold').innerText = earned; savedData.gold += earned; saveGame();
-                if(this.syncInterval) clearInterval(this.syncInterval);
+            endGame(titleText, color, isVictory, forceScore = null) { 
+                if (this.state === 2) return; 
+                this.state = 2; document.getElementById('battle-ui').style.display = 'none'; document.getElementById('game-over-overlay').style.display = 'flex'; 
+                document.getElementById('result-title').innerText = titleText; document.getElementById('result-title').style.color = color; 
+                if (forceScore !== null) this.scoreBlue = forceScore; 
+                document.getElementById('final-score').innerText = this.scoreBlue; 
+                let earned = this.scoreBlue * 15 + (isVictory ? 50 : 10); document.getElementById('earned-gold').innerText = earned; savedData.gold += earned; saveGame(); 
+                if(this.syncInterval) clearInterval(this.syncInterval); 
 
                 if (this.isHost && this.currentLobbyMode === 'multi') { this.broadcast({ type: 'game_over', titleText, color, isVictory, score: this.scoreBlue }); }
             }
-            hostReturnToLobby() {
+            hostReturnToLobby() { 
                 if (this.isHost && this.currentLobbyMode === 'multi') { this.broadcast({ type: 'return_lobby' }); }
-                this.state = 0; this.updateLobbyUI(); document.getElementById('game-over-overlay').style.display = 'none'; this.enterLobby(this.currentLobbyMode || 'single');
-            }
+                this.state = 0; this.updateLobbyUI(); document.getElementById('game-over-overlay').style.display = 'none'; this.enterLobby(this.currentLobbyMode || 'single'); 
+            } 
             showDmg(x, y, val, color='#fff') { const el = document.createElement('div'); el.className = 'dmg-num'; el.innerText = val; el.style.color = color; const screenX = (x - this.camera.x) * this.camera.zoom; const screenY = (y - this.camera.y) * this.camera.zoom; el.style.left = screenX + 'px'; el.style.top = screenY + 'px'; document.getElementById('damage-container').appendChild(el); setTimeout(() => el.remove(), 800); }
 
             startGameLoop() { const loop = () => { this.draw(); if(this.state === 1) this.updateBattle(); requestAnimationFrame(loop); }; loop(); }
             draw() { if(this.state === 0 || this.state === -1) this.drawLobby(); else if(this.state === 1) this.drawBattle(); }
-            
-            drawLobby() {
+            drawLobby() { 
                 ctx.clearRect(0, 0, canvas.width, canvas.height); const c = ROSTER[this.selChar];
                 const grd = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 50, canvas.width/2, canvas.height/2, 600); grd.addColorStop(0, '#222'); grd.addColorStop(1, '#000'); ctx.fillStyle = grd; ctx.fillRect(0,0,canvas.width,canvas.height);
                 const cx = canvas.width/2; const cy = canvas.height/2 - 50; if(window.Input.rotateLobby || this.state === -1) this.lobbyAngle += 0.05; else this.lobbyAngle += 0.02;
@@ -383,50 +593,35 @@
                 ctx.fillStyle = c.color; ctx.fillRect(-20, -20, 40, 60); ctx.fillStyle = 'rgba(0,0,0,0.2)'; if(sin > 0) ctx.fillRect(0, -20, 20, 60);
                 ctx.fillStyle = '#ffccbc'; ctx.beginPath(); ctx.arc(0, -30, 25, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#444'; ctx.fillRect(25 * cos - 10, 10 + 10 * sin, 30, 15); ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(-15, 40 + 5*sin, 10, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(15, 40 - 5*sin, 10, 0, Math.PI*2); ctx.fill(); ctx.restore();
             }
-            
             drawBattle() {
                 const z = this.camera.zoom; ctx.clearRect(0,0,canvas.width,canvas.height); ctx.save(); ctx.scale(z, z); ctx.translate(-this.camera.x, -this.camera.y);
-                
-                // 地板與網格
-                ctx.fillStyle = '#2e3138'; ctx.fillRect(0,0,this.mapW,this.mapH); 
-                ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth=2; ctx.beginPath(); 
-                for(let i=0; i<=this.mapW; i+=100) { ctx.moveTo(i,0); ctx.lineTo(i,this.mapH); } 
-                for(let i=0; i<=this.mapH; i+=100) { ctx.moveTo(0,i); ctx.lineTo(this.mapW,i); } 
-                ctx.stroke(); ctx.strokeStyle = '#f44336'; ctx.lineWidth = 10; ctx.strokeRect(0,0,this.mapW,this.mapH);
-                
-                // 障礙物
+                ctx.fillStyle = '#6d4c41'; ctx.fillRect(0,0,this.mapW,this.mapH); ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.lineWidth=2; ctx.beginPath(); for(let i=0; i<this.mapW; i+=100) { ctx.moveTo(i,0); ctx.lineTo(i,this.mapH); } for(let i=0; i<this.mapH; i+=100) { ctx.moveTo(0,i); ctx.lineTo(this.mapW,i); } ctx.stroke(); ctx.strokeStyle = '#f44336'; ctx.lineWidth = 10; ctx.strokeRect(0,0,this.mapW,this.mapH);
                 ctx.fillStyle = '#424242'; this.obstacles.forEach(o => { ctx.fillRect(o.x, o.y, o.w, o.h); ctx.fillStyle = '#616161'; ctx.fillRect(o.x, o.y-10, o.w, 10); ctx.fillStyle = '#424242'; });
 
-                // 其他玩家 (連線用)
-                Object.values(this.otherPlayers).forEach(op => {
-                    if(op.hp <= 0 || op.isDead) return;
-                    ctx.save(); ctx.translate(op.x, op.y); ctx.rotate(op.angle); ctx.fillStyle = op.color || '#fff'; ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#333'; ctx.fillRect(10, -5, 25, 10); ctx.restore(); ctx.fillStyle = '#f00'; ctx.fillRect(op.x-25, op.y-35, 50, 6); ctx.fillStyle = '#00bcd4'; ctx.fillRect(op.x-25, op.y-35, 50*Math.max(0, op.hp/op.maxHp), 6); if(op.ammo !== undefined) { const slotW = 15; const gap = 2.5; const startX = op.x - 25; const barY = op.y - 43; for(let i=0; i<op.maxAmmo; i++) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(startX + i*(slotW+gap), barY, slotW, 4); if(i < op.ammo) { ctx.fillStyle = '#ff9800'; ctx.fillRect(startX + i*(slotW+gap), barY, slotW, 4); } else if (i === op.ammo && op.ammoReloadPct) { ctx.fillStyle = '#ffb74d'; ctx.fillRect(startX + i*(slotW+gap), barY, slotW * op.ammoReloadPct, 4); } } } ctx.fillStyle = '#4facfe'; ctx.font="bold 12px Arial"; ctx.textAlign="center"; ctx.fillText(op.charName.split('·')[1] || "Player", op.x, op.y-50);
+                Object.values(this.otherPlayers).forEach(op => { 
+                    if(op.hp <= 0 || op.isDead) return; 
+                    ctx.save(); ctx.translate(op.x, op.y); ctx.rotate(op.angle); ctx.fillStyle = op.color || '#fff'; ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#333'; ctx.fillRect(10, -5, 25, 10); ctx.restore(); ctx.fillStyle = '#f00'; ctx.fillRect(op.x-25, op.y-35, 50, 6); ctx.fillStyle = '#00bcd4'; ctx.fillRect(op.x-25, op.y-35, 50*Math.max(0, op.hp/op.maxHp), 6); if(op.ammo !== undefined) { const slotW = 15; const gap = 2.5; const startX = op.x - 25; const barY = op.y - 43; for(let i=0; i<op.maxAmmo; i++) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(startX + i*(slotW+gap), barY, slotW, 4); if(i < op.ammo) { ctx.fillStyle = '#ff9800'; ctx.fillRect(startX + i*(slotW+gap), barY, slotW, 4); } else if (i === op.ammo && op.ammoReloadPct) { ctx.fillStyle = '#ffb74d'; ctx.fillRect(startX + i*(slotW+gap), barY, slotW * op.ammoReloadPct, 4); } } } ctx.fillStyle = '#4facfe'; ctx.font="bold 12px Arial"; ctx.textAlign="center"; ctx.fillText(op.charName.split('·')[1] || "Player", op.x, op.y-50); 
                 });
-               
-                // 敵人
+                
                 this.enemies.forEach(e => { if(e.hp <= 0) return; ctx.fillStyle = e.color || '#f44336'; ctx.beginPath(); ctx.arc(e.x, e.y, e.radius, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(e.x + 10, e.y - 5, 5, 0, Math.PI*2); ctx.fill(); if(e.pauseTimer > 0) { ctx.strokeStyle = '#ffeb3b'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(e.x, e.y, e.radius+5+Math.sin(Date.now()/50)*5, 0, Math.PI*2); ctx.stroke(); } if(e.dashTimer > 0) { ctx.fillStyle = 'rgba(244,67,54,0.3)'; ctx.beginPath(); ctx.arc(e.x - Math.cos(e.dashAngle)*20, e.y - Math.sin(e.dashAngle)*20, e.radius, 0, Math.PI*2); ctx.fill(); } ctx.fillStyle = '#f00'; ctx.fillRect(e.x-20, e.y-40, 40, 5); ctx.fillStyle = e.moveStyle === 'FleeCover' && Math.random() > 0.5 ? '#fff' : '#0f0'; ctx.fillRect(e.x-20, e.y-40, 40 * Math.max(0, (e.hp/e.maxHp)), 5); });
 
-                // 本機玩家
                 if(this.player) {
-                    const p = this.player; ctx.save();
+                    const p = this.player; ctx.save(); 
                     if (p.hp <= 0) ctx.globalAlpha = 0.3; // 陣亡變成半透明幽靈
                     ctx.translate(p.x, p.y); ctx.rotate(p.angle);
-                    if(p.hp > 0 && (window.Input.aim.active || window.Input.touchR)) { ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth=3; ctx.setLineDash([15, 15]); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(600, 0); ctx.stroke(); ctx.setLineDash([]); }
+                    if(p.hp > 0 && (!this.isMobile && window.Input.aim.active || window.Input.touchR)) { ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth=3; ctx.setLineDash([15, 15]); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(600, 0); ctx.stroke(); ctx.setLineDash([]); }
                     ctx.fillStyle = p.data.color; ctx.beginPath(); ctx.arc(0, 0, p.radius, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#333'; ctx.fillRect(10, -5, 25, 10); if(p.superCharge >= 100) { ctx.strokeStyle = '#fcd307'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(0,0,p.radius+5,0,Math.PI*2); ctx.stroke(); } ctx.restore();
-                   
+                    
                     if (p.hp > 0) {
-                        ctx.fillStyle = '#f00'; ctx.fillRect(p.x-25, p.y-45, 50, 6); ctx.fillStyle = '#00e676'; ctx.fillRect(p.x-25, p.y-45, 50 * Math.max(0, (p.hp/p.maxHp)), 6);
+                        ctx.fillStyle = '#f00'; ctx.fillRect(p.x-25, p.y-45, 50, 6); ctx.fillStyle = '#00e676'; ctx.fillRect(p.x-25, p.y-45, 50 * Math.max(0, (p.hp/p.maxHp)), 6); 
                         const slotW = 15; const gap = 2.5; const startX = p.x - 25; const barY = p.y - 53;
                         for(let i=0; i<p.maxAmmo; i++) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(startX + i*(slotW+gap), barY, slotW, 4); if (i < p.ammo) { ctx.fillStyle = '#ff9800'; ctx.fillRect(startX + i*(slotW+gap), barY, slotW, 4); ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = 1; ctx.strokeRect(startX + i*(slotW+gap), barY, slotW, 4); } else if (i === p.ammo) { ctx.fillStyle = '#ffb74d'; ctx.fillRect(startX + i*(slotW+gap), barY, slotW * (p.ammoReloadTimer/p.ammoReloadMax), 4); } }
                     }
                     ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(p.x-20, p.y-75, 40, 15); ctx.fillStyle = '#fff'; ctx.font="bold 14px Arial"; ctx.textAlign="center"; ctx.fillText(p.hp > 0 ? "You" : "Ghost", p.x, p.y-63);
                 }
-                
-                // 子彈
                 this.bullets.forEach(b => { ctx.fillStyle = b.color || (b.team==='blue'?'#00e676':'#ff5252'); ctx.beginPath(); ctx.arc(b.x, b.y, b.speed > 25 ? 12 : 8, 0, Math.PI*2); ctx.fill(); ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 10; ctx.fill(); ctx.shadowBlur = 0; }); ctx.restore();
             }
         }
-        
         window.game = new window.Game();
     </script>
 </body>
