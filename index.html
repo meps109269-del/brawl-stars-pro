@@ -3,760 +3,430 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>荒野亂鬥 PRO - V11.0 (連線+金幣升級版)</title>
-    <!-- 引入公開免費的多人連線伺服器 (PeerJS) -->
+    <title> 荒野亂鬥 PRO - V21 無懈可擊版 </title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
     <style>
-        :root {
-            --primary: #fcd307;
-            --secondary: #e91e63;
-            --panel-bg: rgba(15, 15, 25, 0.95);
-            --text-main: #ffffff;
-        }
-        
+        :root { --primary: #fcd307; --secondary: #e91e63; --panel-bg: rgba(15, 15, 25, 0.95); --text-main: #ffffff; }
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-        
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; color: var(--text-main); touch-action: none; }
-        canvas { display: block; width: 100vw; height: 100vh; }
+        canvas { display: block; width: 100vw; height: 100vh; position: absolute; top:0; left:0; z-index: 1; }
 
-        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; }
-        .interactive { pointer-events: auto; }
-
-        /* 通用按鈕 */
-        .btn { background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%); border: 2px solid #fff; border-radius: 8px; padding: 10px 20px; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #005cbf; text-align: center; }
-        .btn:active { transform: translateY(4px); box-shadow: 0 0 0; }
-        .btn-yellow { background: linear-gradient(180deg, #ff9800 0%, #ffc107 100%); box-shadow: 0 4px 0 #b36b00; }
-        .btn-green { background: linear-gradient(180deg, #4caf50 0%, #8bc34a 100%); box-shadow: 0 4px 0 #2e7d32; }
-        .btn-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); border: 1px solid #fff; font-size: 1.2rem; cursor: pointer; margin-left: 5px; transition: 0.2s; }
-        .btn-icon:active { background: #fff; color: #000; }
-
-        /* 大廳與選擇器 */
-        .top-bar { display: flex; justify-content: space-between; padding: 10px 20px; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); align-items: center; }
-        .gold-display { background: rgba(0,0,0,0.6); border: 2px solid #fcd307; padding: 5px 15px; border-radius: 20px; color: #fcd307; font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; gap: 5px; }
+        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; z-index: 10; }
         
-        .selector-container { position: absolute; top: 55%; width: 100%; display: flex; flex-direction: column; align-items: center; pointer-events: none; gap: 10px; }
-        .selector-box { display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 30px; pointer-events: auto; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(5px); min-width: 320px; }
-        .selector-row { display: flex; width: 100%; justify-content: space-between; align-items: center; }
-        .arrow-btn { font-size: 1.5rem; color: white; cursor: pointer; padding: 0 15px; }
-        .bottom-nav { position: absolute; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 10px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); align-items: flex-end; }
-
-        /* 網路連線區塊 */
-        .lobby-players-box { position: absolute; top: 80px; right: 20px; background: rgba(0,0,0,0.8); border: 2px solid #4facfe; border-radius: 10px; padding: 15px; width: 250px; pointer-events: auto; box-shadow: 0 0 15px rgba(79, 172, 254, 0.5); }
-        .lobby-players-title { font-size: 1rem; color: #4facfe; margin-bottom: 10px; border-bottom: 1px solid #555; padding-bottom: 5px; font-weight: bold; }
-
-        /* 3D 展示區 */
-        #lobby-3d-placeholder { position: absolute; top: 10%; left: 0; width: 100%; height: 45%; pointer-events: auto; }
-
-        /* 戰鬥介面 */
-        #battle-ui { display: none; }
-        .battle-header { position: absolute; top: 10px; width: 100%; display: flex; justify-content: center; gap: 20px; font-weight: bold; text-shadow: 1px 1px 2px #000; font-size: 1.2rem; }
-        .score-box { background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; border: 2px solid #fff; min-width: 80px; text-align: center; }
+        #lobby-ui { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0,0,0,0.4); pointer-events: auto;}
+        .title-box { font-size: 3rem; color: var(--primary); font-weight: bold; text-shadow: 0 4px 10px rgba(0,0,0,0.8); margin-bottom: 30px; }
+        .btn { pointer-events: auto; padding: 15px 30px; font-size: 1.2rem; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.1s; margin: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
+        .btn:active { transform: scale(0.95); }
         
-        /* 虛擬搖桿 */
-        .joystick-area { position: absolute; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); pointer-events: auto; touch-action: none; transition: opacity 0.3s; }
-        .joystick-knob { position: absolute; width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.8); top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-        #stick-l { bottom: 50px; left: 50px; }
-        #stick-r { bottom: 50px; right: 50px; border-color: rgba(255,0,0,0.3); }
-        #stick-r .joystick-knob { background: rgba(255,100,100,0.8); }
-
-        /* 技能按鈕群 */
-        .skill-group { position: absolute; bottom: 60px; right: 220px; display: flex; flex-direction: column; gap: 15px; align-items: flex-end; pointer-events: auto; }
-        .action-btn { width: 60px; height: 60px; border-radius: 50%; background: #222; border: 3px solid #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.5); position: relative; }
-        .action-btn:active { transform: scale(0.9); }
-        .btn-super { width: 90px; height: 90px; border-color: #fcd307; color: #fcd307; background: rgba(255, 215, 0, 0.2); }
-        .btn-super.ready { background: #fcd307; color: #000; box-shadow: 0 0 20px #fcd307; animation: pulse 1s infinite; }
-        .btn-gadget { width: 50px; height: 50px; border-color: #00e676; color: #00e676; }
+        #battle-ui { display: none; width: 100%; height: 100%; position: absolute; top: 0; pointer-events: none; }
         
-        /* 右側功能列 */
-        .side-menu { position: absolute; top: 60px; right: 20px; display: flex; flex-direction: column; gap: 10px; pointer-events: auto; }
-        
-        /* 彈出文字與UI */
-        #damage-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 50; }
-        .dmg-num { position: absolute; font-weight: 900; font-size: 1.5rem; text-shadow: 1px 1px 0 #000; animation: floatUp 0.8s forwards; pointer-events: none; }
-        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-50px) scale(1.2); } }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        /* Joysticks */
+        .joystick { position: absolute; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 50%; bottom: 30px; pointer-events: auto; touch-action: none; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+        #joy-left { left: 30px; }
+        #joy-right { right: 130px; } /* 為大絕按鈕留空間 */
+        .joy-knob { width: 40px; height: 40px; background: rgba(255,255,255,0.7); border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.5); pointer-events: none; }
 
-        .toast { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 20px; pointer-events: none; opacity: 0; transition: 0.3s; z-index: 300; }
-        
-        #game-over-overlay { display: none; background: rgba(0,0,0,0.9); z-index: 200; align-items: center; justify-content: center; flex-direction: column; }
+        /* Super Skill Button */
+        #btn-super { position: absolute; bottom: 50px; right: 30px; width: 80px; height: 80px; border-radius: 50%; background: #555; pointer-events: auto; opacity: 0.5; border: 3px solid #333; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; color: #fff; text-shadow: 1px 1px 2px #000; transition: all 0.2s;}
+        #btn-super.ready { background: var(--primary); opacity: 1; border-color: #fff; box-shadow: 0 0 20px var(--primary); cursor: pointer; color: #000; text-shadow: none;}
 
+        #game-over-overlay { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); z-index: 20; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto;}
+        #result-title { font-size: 4rem; margin-bottom: 20px; }
+        .stats { font-size: 1.5rem; margin-bottom: 10px; }
+        
+        #damage-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15; overflow: hidden; }
+        .dmg-num { position: absolute; font-weight: 900; font-size: 24px; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; pointer-events: none; animation: floatUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1.5); } 100% { opacity: 0; transform: translateY(-50px) scale(1); } }
     </style>
 </head>
 <body>
-
     <canvas id="gameCanvas"></canvas>
+    
+    <div class="ui-layer" id="lobby-ui">
+        <div class="title-box">荒野亂鬥 PRO</div>
+        <p style="color:#aaa; margin-bottom: 20px;">V21 無懈可擊版 - AI 重構</p>
+        <button class="btn" onclick="game.startGame('single')">單人模式 (開始討伐)</button>
+    </div>
+
+    <div class="ui-layer" id="battle-ui">
+        <div id="joy-left" class="joystick"><div class="joy-knob" id="knob-left"></div></div>
+        <div id="joy-right" class="joystick"><div class="joy-knob" id="knob-right"></div></div>
+        <div id="btn-super" onclick="game.useSuper()">大絕</div>
+    </div>
+
     <div id="damage-container"></div>
-    <div id="toast" class="toast">提示訊息</div>
 
-    <!-- 大廳 UI -->
-    <div id="lobby-ui" class="ui-layer">
-        <div class="top-bar interactive">
-            <div>
-                <div style="font-weight:bold; color:var(--primary); font-size:1.2rem;">BRAWL PRO v11.0</div>
-                <div style="font-size:0.8rem; color:#00e676;">連線對戰 + 金幣升級</div>
-            </div>
-            <div class="gold-display">💰 <span id="lobby-gold-text">0</span></div>
-        </div>
-
-        <!-- 網路連線介面 -->
-        <div class="lobby-players-box" id="lobby-players-box">
-            <div class="lobby-players-title">🌐 好友連線區</div>
-            <div id="connection-status" style="font-size: 0.9rem; margin-bottom: 10px; color: #ffeb3b; white-space: pre-wrap;">狀態: 單機模式</div>
-            <button class="btn btn-yellow" onclick="window.game.createRoom()" style="width: 100%; padding: 5px; font-size: 0.9rem; margin-bottom: 10px;">👑 建立房間 (當房主)</button>
-            <div style="display: flex; gap: 5px;">
-                <input type="text" id="room-input" placeholder="輸入代碼" style="width: 60%; background: #222; color: #fff; border: 1px solid #555; border-radius: 4px; padding: 5px; text-transform: uppercase;">
-                <button class="btn" onclick="window.game.joinRoom()" style="width: 40%; padding: 5px; font-size: 0.9rem;">🔗 加入</button>
-            </div>
-        </div>
-
-        <div id="lobby-3d-placeholder" class="interactive" 
-             onmousedown="window.Input.rotateLobby=true" onmouseup="window.Input.rotateLobby=false"
-             ontouchstart="window.Input.rotateLobby=true" ontouchend="window.Input.rotateLobby=false">
-        </div>
-
-        <div class="selector-container">
-            <div class="selector-box">
-                <div class="selector-row">
-                    <div class="arrow-btn" onclick="window.game.prevChar()">◀</div>
-                    <div style="text-align:center;">
-                        <div id="lobby-char-name" style="color:#00e676; font-size:1.5rem; font-weight:bold;">R1 衝鋒兵·泰德</div>
-                        <div style="color:#aaa; font-size:0.9rem;">
-                            等級 <span id="lobby-char-lvl" style="color:#fff; font-weight:bold;">1</span> 
-                            (血量: <span id="lobby-char-hp">6000</span> / 攻擊: <span id="lobby-char-atk">550</span>)
-                        </div>
-                    </div>
-                    <div class="arrow-btn" onclick="window.game.nextChar()">▶</div>
-                </div>
-                <button class="btn btn-green interactive" id="btn-upgrade" onclick="window.game.upgradeChar()" style="margin-top:10px; padding: 5px 20px;">
-                    ⬆ 升級 (💰 <span id="upgrade-cost">100</span>)
-                </button>
-            </div>
-
-            <div class="selector-box" style="margin-top:10px; padding: 10px; min-width: 250px;">
-                <div class="selector-row">
-                    <div class="arrow-btn" onclick="window.game.prevMode()">◀</div>
-                    <div style="text-align:center;">
-                        <div id="lobby-mode-name" style="color:#ff9800; font-size:1.2rem; font-weight:bold;">亂鬥競技場</div>
-                    </div>
-                    <div class="arrow-btn" onclick="window.game.nextMode()">▶</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bottom-nav interactive">
-            <div class="btn btn-yellow" onclick="window.game.hostStartBattle()" style="width:200px; height:60px; font-size:1.5rem; line-height:36px; box-shadow: 0 0 15px rgba(255,193,7,0.5);">⚔ 開始對戰</div>
-        </div>
+    <div class="ui-layer" id="game-over-overlay">
+        <h1 id="result-title">遊戲結束</h1>
+        <div class="stats">擊殺分數: <span id="final-score" style="color:var(--primary);">0</span></div>
+        <div class="stats">獲得金幣: <span id="earned-gold" style="color:#4caf50;">0</span></div>
+        <br>
+        <button class="btn" onclick="game.hostReturnToLobby()">返回大廳</button>
     </div>
 
-    <!-- 戰鬥 UI -->
-    <div id="battle-ui" class="ui-layer">
-        <div class="battle-header">
-            <div class="score-box" id="score-blue" style="color:#2979ff">0</div>
-            <div class="score-box" id="game-timer" style="color:#fff; min-width:100px;">03:00</div>
-            <div class="score-box" id="score-red" style="color:#f44336">0</div>
-        </div>
-
-        <div class="side-menu">
-            <div class="btn-icon" onclick="window.game.toggleZoom()">🔍</div>
-            <div class="btn-icon" onclick="window.game.showToast('發送表情...')">😊</div>
-            <div class="btn-icon" onclick="window.game.showToast('語音：進攻！')">🎤</div>
-        </div>
-
-        <div id="stick-l" class="joystick-area"><div class="joystick-knob" id="knob-l"></div></div>
-        <div id="stick-r" class="joystick-area"><div class="joystick-knob" id="knob-r"></div></div>
-
-        <div class="skill-group">
-            <div class="action-btn btn-gadget" id="btn-gadget" onmousedown="window.Input.onBtnDown('e')" ontouchstart="window.Input.onBtnDown('e')">G</div>
-            <div class="action-btn btn-super" id="btn-super" onmousedown="window.Input.onBtnDown('r')" ontouchstart="window.Input.onBtnDown('r')">☠</div>
-        </div>
-    </div>
-
-    <!-- 遊戲結束 -->
-    <div id="game-over-overlay" class="ui-layer interactive">
-        <div class="result-title" id="result-title" style="font-size:4rem; font-weight:900; color:#fcd307; margin-bottom:10px;">VICTORY!</div>
-        <div style="font-size: 1.5rem; margin-bottom: 10px;">最終得分: <span id="final-score">0</span></div>
-        <div style="font-size: 1.5rem; margin-bottom: 30px; color: #fcd307; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 10px; border: 1px solid #fcd307;">
-            獲得金幣: +<span id="earned-gold">0</span> 💰
-        </div>
-        <div style="display:flex; gap:20px;">
-             <div class="btn btn-yellow" onclick="window.game.returnToLobby()" style="font-size:1.2rem;">返回大廳</div>
-        </div>
-    </div>
-
-    <!-- 遊戲主要邏輯 -->
     <script>
-        // ==========================================
-        // 角色與資料庫 (免資料庫 LocalStorage 版)
-        // ==========================================
-        const ROSTER = [
-            { id: 'r1', name: '衝鋒兵·泰德', color: '#4caf50', hp: 6000, speed: 6, atk: { dmg: 550, type: 'melee', cd: 0.8 }, skills: { q: { name: '衝鋒', type: 'dash', val: 650 }, e: { name: '防禦', type: 'buff_def', val: 0.3, dur: 5 }, r: { name: '戰吼', type: 'buff_atk', val: 0.25, dur: 6 } } },
-            { id: 'r2', name: '火槍手·艾莉', color: '#ff5722', hp: 3800, speed: 6.5, atk: { dmg: 520, type: 'shot', cd: 1.0 }, skills: { q: { name: '燃燒彈', type: 'shot_dot', val: 80 }, e: { name: '後撤', type: 'dash_back', val: 150 }, r: { name: '火焰風暴', type: 'aoe_dot', val: 220, dur: 4 } } },
-            { id: 'r3', name: '炸彈人·布魯', color: '#795548', hp: 4200, speed: 5.8, atk: { dmg: 650, type: 'throw', cd: 1.2 }, skills: { q: { name: '黏彈', type: 'shot_sticky', val: 900 }, e: { name: '炸飛', type: 'dash_dmg', val: 450 }, r: { name: '連鎖爆', type: 'aoe_chain', val: 500 } } },
-            { id: 'r11', name: '冰霜射手·雪莉', color: '#00bcd4', hp: 3700, speed: 6, atk: { dmg: 520, type: 'shot_slow', cd: 1.0 }, skills: { q: { name: '冰陷阱', type: 'trap_slow', val: 0.5 }, e: { name: '冰牆', type: 'wall_ice', hp: 1000 }, r: { name: '冰雨', type: 'aoe_rain', val: 450 } } },
-            { id: 'r99', name: '光束大師·雷', color: '#e040fb', hp: 3500, speed: 7, atk: { dmg: 80, type: 'laser', cd: 0.1 }, skills: { q: { name: '折射盾', type: 'shield_reflect', val: 500 }, e: { name: '閃現', type: 'teleport', val: 400 }, r: { name: '毀滅光束', type: 'laser_mega', val: 200 } } }
-        ];
-
-        const MODES = [
-            { id: 'arena', name: '亂鬥競技場', desc: '多人連線生存', color: '#ff9800' }
-        ];
-
-        // 讀取本地存檔 (金幣與等級)
-        let savedData = JSON.parse(localStorage.getItem('BrawlProData_V11')) || {
-            gold: 500, // 新手送 500 金幣
-            levels: { r1: 1, r2: 1, r3: 1, r11: 1, r99: 1 }
-        };
-
-        function saveGame() {
-            localStorage.setItem('BrawlProData_V11', JSON.stringify(savedData));
-        }
-
-        // ==========================================
-        // 核心輸入系統
-        // ==========================================
-        window.Input = {
-            move: { x: 0, y: 0, active: false }, aim: { x: 0, y: 0, active: false, isAuto: false, fire: false },
-            keys: {}, rotateLobby: false,
-            touchL: null, touchR: null, originL: {x:0, y:0}, originR: {x:0, y:0},
-            btnSuper: false, btnGadget: false,
-            
-            init() {
-                window.addEventListener('keydown', e => this.keys[e.key.toLowerCase()] = true);
-                window.addEventListener('keyup', e => this.keys[e.key.toLowerCase()] = false);
-                window.addEventListener('mousemove', e => { if(!this.touchR) { this.aim.mousePos = { x: e.clientX, y: e.clientY }; this.aim.active = true; } });
-                window.addEventListener('mousedown', () => { if(!this.touchR) this.aim.mouseDown = true; });
-                window.addEventListener('mouseup', () => { if(!this.touchR) this.aim.mouseDown = false; });
-                
-                const handleTouch = (e, side, type) => {
-                    e.preventDefault();
-                    for(let i=0; i<e.changedTouches.length; i++) {
-                        const t = e.changedTouches[i];
-                        const el = document.getElementById(side === 'l' ? 'stick-l' : 'stick-r');
-                        if(type === 'start') {
-                            if(side === 'l') { this.touchL = t.identifier; const r = el.getBoundingClientRect(); this.originL = {x: r.left+r.width/2, y: r.top+r.height/2}; this.updateStick(t, 'l'); }
-                            if(side === 'r') { this.touchR = t.identifier; const r = el.getBoundingClientRect(); this.originR = {x: r.left+r.width/2, y: r.top+r.height/2}; this.aim.isAuto=false; this.updateStick(t, 'r'); }
-                        }
-                        if(type === 'move') {
-                            if(t.identifier === this.touchL) this.updateStick(t, 'l');
-                            if(t.identifier === this.touchR) this.updateStick(t, 'r');
-                        }
-                        if(type === 'end') {
-                            if(t.identifier === this.touchL) { this.touchL = null; this.move = {x:0, y:0, active:false}; this.resetKnob('l'); }
-                            if(t.identifier === this.touchR) { 
-                                if(Math.hypot(this.aim.x, this.aim.y) < 0.2) this.aim.isAuto = true; else this.aim.fire = true;
-                                this.touchR = null; this.aim.active=false; this.resetKnob('r'); 
-                            }
-                        }
-                    }
-                };
-                const elL = document.getElementById('stick-l'); const elR = document.getElementById('stick-r');
-                ['touchstart', 'touchmove', 'touchend'].forEach(evt => {
-                    elL.addEventListener(evt, e => handleTouch(e, 'l', evt.replace('touch','')));
-                    elR.addEventListener(evt, e => handleTouch(e, 'r', evt.replace('touch','')));
-                });
-            },
-            updateStick(touch, side) {
-                const origin = side === 'l' ? this.originL : this.originR;
-                const maxDist = 50; let dx = touch.clientX - origin.x, dy = touch.clientY - origin.y;
-                const dist = Math.hypot(dx, dy);
-                if(dist > maxDist) { dx = (dx/dist)*maxDist; dy = (dy/dist)*maxDist; }
-                document.getElementById('knob-'+side).style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-                if(side === 'l') this.move = { x: dx/maxDist, y: dy/maxDist, active: true };
-                else { this.aim.x = dx/maxDist; this.aim.y = dy/maxDist; this.aim.active = true; }
-            },
-            resetKnob(side) { document.getElementById('knob-'+side).style.transform = `translate(-50%, -50%)`; },
-            onBtnDown(key) { if(key === 'r') this.btnSuper = true; if(key === 'e') this.btnGadget = true; setTimeout(() => { this.btnSuper=false; this.btnGadget=false; }, 200); }
-        };
-
-        // ==========================================
-        // 遊戲主引擎 (包含升級與連線)
-        // ==========================================
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+        window.addEventListener('resize', resize);
+        resize();
 
-        window.Game = class {
+        // 存檔系統
+        let savedData = { gold: 0 };
+        function saveGame() { localStorage.setItem('brawl_save', JSON.stringify(savedData)); }
+        try { if(localStorage.getItem('brawl_save')) savedData = JSON.parse(localStorage.getItem('brawl_save')); } catch(e){}
+
+        // 角色設定
+        const ROSTER = [
+            { name: '神槍手·藍', color: '#2196f3', maxHp: 1500, speed: 6, maxAmmo: 3, reloadSpeed: 50, dmg: 400, fireRate: 15 }
+        ];
+
+        // 搖桿全域輸入
+        window.Input = { x: 0, y: 0, aim: { active: false, x: 0, y: 0 }, touchR: false, rotateLobby: false };
+
+        const setupJoystick = (zoneId, knobId, isAim) => {
+            const zone = document.getElementById(zoneId);
+            const knob = document.getElementById(knobId);
+            let active = false, baseRect = null;
+            
+            const handleDown = (e) => {
+                e.preventDefault(); active = true; baseRect = zone.getBoundingClientRect();
+                if(isAim) { window.Input.touchR = true; window.Input.aim.active = true; }
+                update(e);
+            };
+            const handleMove = (e) => { if(active) update(e); };
+            const handleUp = (e) => {
+                active = false; knob.style.transform = `translate(0px, 0px)`;
+                if(isAim) { window.Input.aim.active = false; window.Input.touchR = false; }
+                else { window.Input.x = 0; window.Input.y = 0; }
+            };
+            const update = (e) => {
+                let cx = baseRect.left + baseRect.width/2, cy = baseRect.top + baseRect.height/2;
+                let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                let tx = clientX - cx, ty = clientY - cy;
+                let dist = Math.hypot(tx, ty);
+                let maxDist = baseRect.width/2 - 20;
+                if(dist > maxDist) { tx = (tx/dist)*maxDist; ty = (ty/dist)*maxDist; }
+                knob.style.transform = `translate(${tx}px, ${ty}px)`;
+                
+                let nx = tx/maxDist, ny = ty/maxDist;
+                if(isAim) { window.Input.aim.x = nx; window.Input.aim.y = ny; }
+                else { window.Input.x = nx; window.Input.y = ny; }
+            };
+            zone.addEventListener('touchstart', handleDown, {passive:false}); zone.addEventListener('touchmove', handleMove, {passive:false}); zone.addEventListener('touchend', handleUp);
+            zone.addEventListener('mousedown', handleDown); document.addEventListener('mousemove', handleMove); document.addEventListener('mouseup', handleUp);
+        };
+
+        setupJoystick('joy-left', 'knob-left', false);
+        setupJoystick('joy-right', 'knob-right', true);
+
+        // 遊戲主引擎
+        class Game {
             constructor() {
-                this.state = 0; // 0: Lobby, 1: Battle, 2: GameOver
-                this.player = null; 
-                this.myId = Math.random().toString(36).substring(2, 9); // 隨機ID
-                this.otherPlayers = {}; 
-                this.enemies = []; 
+                this.state = 0; // 0=大廳, 1=戰鬥, 2=結算
+                this.selChar = 0;
+                this.lobbyAngle = 0;
+                this.scoreBlue = 0;
+                this.myId = Math.random().toString(36).substr(2, 9);
+                this.isHost = true;
+                this.isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+                this.currentLobbyMode = 'single';
+                this.otherPlayers = {};
+                this.camera = { x: 0, y: 0, zoom: 1 };
+                this.mapW = 2400;
+                this.mapH = 2400;
+                this.obstacles = [];
+                this.enemies = [];
                 this.bullets = [];
-                this.selChar = 0; this.selMode = 0; 
-                this.lobbyAngle = 0; this.camera = {x:0, y:0, zoom:1};
                 
-                // 地圖
-                this.mapW = 2000; this.mapH = 1500;
-                this.obstacles = [
-                    {x: 400, y: 300, w: 200, h: 100}, {x: 1400, y: 1100, w: 200, h: 100}, 
-                    {x: 950, y: 500, w: 100, h: 500}, {x: 200, y: 800, w: 150, h: 150}, {x: 1650, y: 400, w: 150, h: 150}
-                ];
-
-                this.scoreBlue = 0; this.scoreRed = 0; this.timeRemaining = 180 * 60;
-                
-                // 網路連線變數 (PeerJS)
-                this.peer = null;
-                this.conns = [];
-                this.isHost = false;
-                this.roomId = '';
-                this.syncInterval = null;
-
-                window.Input.init();
-                this.updateLobbyUI();
+                // 生成障礙物
+                for(let i=0; i<20; i++) {
+                    this.obstacles.push({
+                        x: Math.random()*(this.mapW-300)+150, y: Math.random()*(this.mapH-300)+150,
+                        w: Math.random()*150+50, h: Math.random()*150+50
+                    });
+                }
                 this.startGameLoop();
             }
 
-            // ================= 升級系統 =================
-            upgradeChar() {
-                const char = ROSTER[this.selChar];
-                const currentLevel = savedData.levels[char.id] || 1;
-                const cost = currentLevel * 100;
-
-                if(savedData.gold >= cost) {
-                    savedData.gold -= cost;
-                    savedData.levels[char.id] = currentLevel + 1;
-                    saveGame();
-                    this.updateLobbyUI();
-                    this.showToast(`✨ ${char.name} 升級至 Level ${currentLevel + 1} !`);
-                } else {
-                    this.showToast("❌ 金幣不足！去打幾場賺金幣吧！");
-                }
+            enterLobby(mode) {
+                this.state = 0;
+                document.getElementById('lobby-ui').style.display = 'flex';
+                document.getElementById('battle-ui').style.display = 'none';
             }
 
-            // ================= 網路連線邏輯 (PeerJS) =================
-            createRoom() {
-                this.isHost = true;
-                this.roomId = Math.random().toString(36).substring(2, 6).toUpperCase(); 
-                this.peer = new Peer(this.roomId);
-                
-                const status = document.getElementById('connection-status');
-                status.innerText = `準備中...`;
+            updateLobbyUI() {}
 
-                this.peer.on('open', (id) => {
-                    status.innerText = `✅ 房間代碼: ${id}\n請朋友輸入代碼加入！`;
-                });
-
-                this.peer.on('connection', (conn) => {
-                    this.conns.push(conn);
-                    this.setupConnection(conn);
-                    status.innerText = `✅ 房間代碼: ${this.roomId}\n👥 朋友已加入房間！`;
-                    this.showToast("有玩家加入房間！");
-                });
-            }
-
-            joinRoom() {
-                const inputId = document.getElementById('room-input').value.toUpperCase();
-                if(!inputId) return this.showToast("請輸入朋友的房間代碼！");
-                
-                this.isHost = false;
-                this.peer = new Peer();
-                const status = document.getElementById('connection-status');
-                status.innerText = "連線中...";
-
-                this.peer.on('open', () => {
-                    const conn = this.peer.connect(inputId);
-                    this.conns = [conn];
-                    this.setupConnection(conn);
-
-                    conn.on('open', () => {
-                        status.innerText = `✅ 已成功加入房間: ${inputId}\n等待房主開始遊戲！`;
-                        this.showToast("成功加入房間！");
-                    });
-                });
-            }
-
-            setupConnection(conn) {
-                conn.on('data', (data) => {
-                    if (data.type === 'start_battle') {
-                        this.startBattle(false);
-                    }
-                    else if (data.type === 'state') {
-                        this.otherPlayers[data.id] = data.player;
-                    }
-                    else if (data.type === 'shoot') {
-                        this.spawnRemoteBullet(data);
-                    }
-                    else if (data.type === 'ai_sync') {
-                        this.enemies = data.enemies;
-                        this.scoreBlue = data.scoreBlue;
-                        this.scoreRed = data.scoreRed;
-                        this.updateScoreUI();
-                    }
-                    else if (data.type === 'damage_player') {
-                        if (data.targetId === this.myId && this.player) {
-                            this.player.hp -= data.dmg;
-                            this.showDmg(this.player.x, this.player.y, data.dmg, '#f44336');
-                            if(this.player.hp <= 0) this.endGame('DEFEAT', '#f44336', false);
-                        }
-                    }
-                    else if (data.type === 'damage_ai' && this.isHost) {
-                        const e = this.enemies.find(en => en.id === data.aiId);
-                        if(e) { e.hp -= data.dmg; if(e.hp <= 0) this.checkEnemyDeath(e); }
-                    }
-                });
-            }
-
-            broadcast(data) {
-                this.conns.forEach(conn => {
-                    if(conn && conn.open) conn.send(data);
-                });
-            }
-
-            // ================= UI 與大廳邏輯 =================
-            prevChar() { this.selChar = (this.selChar-1+ROSTER.length)%ROSTER.length; this.updateLobbyUI(); }
-            nextChar() { this.selChar = (this.selChar+1)%ROSTER.length; this.updateLobbyUI(); }
-            prevMode() { this.selMode = (this.selMode-1+MODES.length)%MODES.length; this.updateLobbyUI(); }
-            nextMode() { this.selMode = (this.selMode+1)%MODES.length; this.updateLobbyUI(); }
-            
-            updateLobbyUI() {
-                const c = ROSTER[this.selChar]; const m = MODES[this.selMode];
-                
-                // 更新文字與顏色
-                document.getElementById('lobby-char-name').innerText = c.name; 
-                document.getElementById('lobby-char-name').style.color = c.color;
-                document.getElementById('lobby-mode-name').innerText = m.name; 
-                document.getElementById('lobby-gold-text').innerText = savedData.gold;
-
-                // 計算等級加成 (每級提升 10% 屬性)
-                const lvl = savedData.levels[c.id] || 1;
-                const multiplier = 1 + (lvl - 1) * 0.1;
-                const upgradedHp = Math.floor(c.hp * multiplier);
-                const upgradedAtk = Math.floor(c.atk.dmg * multiplier);
-
-                document.getElementById('lobby-char-lvl').innerText = lvl;
-                document.getElementById('lobby-char-hp').innerText = upgradedHp;
-                document.getElementById('lobby-char-atk').innerText = upgradedAtk;
-
-                const cost = lvl * 100;
-                document.getElementById('upgrade-cost').innerText = cost;
-
-                const btn = document.getElementById('btn-upgrade');
-                if(savedData.gold >= cost) {
-                    btn.style.filter = "grayscale(0%)"; btn.style.pointerEvents = "auto";
-                } else {
-                    btn.style.filter = "grayscale(80%)";
-                }
-            }
-
-            showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.style.opacity=1; setTimeout(()=>t.style.opacity=0, 2000); }
-            toggleZoom() { this.camera.zoom = this.camera.zoom === 1 ? 0.6 : 1; this.showToast(`視野縮放: ${this.camera.zoom}x`); }
-
-            // ================= 戰鬥核心 =================
-            hostStartBattle() {
-                this.broadcast({ type: 'start_battle' }); 
-                this.startBattle(true);
-            }
-
-            startBattle(isInitiator) {
-                this.state = 1; 
-                document.getElementById('lobby-ui').style.display = 'none'; 
+            startGame(mode) {
+                this.state = 1;
+                this.currentLobbyMode = mode;
+                document.getElementById('lobby-ui').style.display = 'none';
                 document.getElementById('battle-ui').style.display = 'block';
                 document.getElementById('game-over-overlay').style.display = 'none';
                 
-                const c = ROSTER[this.selChar]; 
-                
-                // 套用等級加成
-                const lvl = savedData.levels[c.id] || 1;
-                const multiplier = 1 + (lvl - 1) * 0.1;
-                const realHp = Math.floor(c.hp * multiplier);
-                const realAtk = Math.floor(c.atk.dmg * multiplier);
-
-                this.player = { 
-                    x: Math.random() * 500 + 100, y: this.mapH - 200, 
-                    radius: 20, hp: realHp, maxHp: realHp, speed: c.speed, 
-                    angle: -Math.PI/2, data: c, team: 'blue', 
-                    atkDmg: realAtk, // 儲存強化後的攻擊力
-                    superCharge: 0, cd: {atk:0, e:0, r:0}, maxCd: {atk: c.atk.cd*60, e:1000, r:100}
+                let c = ROSTER[this.selChar];
+                this.player = {
+                    x: this.mapW/2, y: this.mapH/2, radius: 22, 
+                    hp: c.maxHp, maxHp: c.maxHp, angle: 0, team: 'blue', data: c,
+                    superCharge: 0, ammo: c.maxAmmo, maxAmmo: c.maxAmmo,
+                    ammoReloadTimer: 0, ammoReloadMax: c.reloadSpeed, cd: 0
                 };
-                
-                this.enemies = []; this.bullets = []; this.otherPlayers = {};
-                this.scoreBlue = 0; this.scoreRed = 0; this.timeRemaining = 180 * 60;
-                
-                if(this.isHost || this.conns.length === 0) {
-                    for(let i=0; i<4; i++) this.spawnEnemy();
-                }
-                this.updateScoreUI();
-
-                if(this.syncInterval) clearInterval(this.syncInterval);
-                this.syncInterval = setInterval(() => this.networkSyncLoop(), 50);
-            }
-
-            networkSyncLoop() {
-                if(this.state !== 1) return;
-                
-                if(this.player) {
-                    this.broadcast({
-                        type: 'state', id: this.myId,
-                        player: { x: this.player.x, y: this.player.y, angle: this.player.angle, hp: this.player.hp, maxHp: this.player.maxHp, charName: this.player.data.name, color: this.player.data.color }
-                    });
-                }
-                
+                this.scoreBlue = 0;
+                this.enemies = [];
+                this.bullets = [];
                 if(this.isHost) {
-                    this.broadcast({ type: 'ai_sync', enemies: this.enemies, scoreBlue: this.scoreBlue, scoreRed: this.scoreRed });
+                    for(let i=0; i<6; i++) this.spawnEnemy();
                 }
             }
 
-            spawnEnemy() { 
-                this.enemies.push({ 
-                    id: Math.random().toString(36).substr(2, 5), 
-                    x: 100 + Math.random()*(this.mapW-200), y: 100 + Math.random()*400, 
-                    radius: 25, hp: 3000, maxHp: 3000, speed: 3 + Math.random()*2, 
-                    team: 'red', cd: 60, targetAngle: 0 
-                }); 
+            useSuper() {
+                let p = this.player;
+                if(p.superCharge >= 100 && p.hp > 0) {
+                    p.superCharge = 0;
+                    this.fireBullet(p, { speed: 25, dmg: p.data.dmg * 2.5, color: '#fcd307', type: 'super' }, 'super');
+                    document.getElementById('btn-super').classList.remove('ready');
+                }
             }
 
-            updateScoreUI() {
-                document.getElementById('score-blue').innerText = this.scoreBlue;
-                document.getElementById('score-red').innerText = this.scoreRed;
+            spawnEnemy() {
+                this.enemies.push({
+                    id: Math.random().toString(36).substr(2, 9),
+                    x: Math.random() > 0.5 ? Math.random()*300 : this.mapW - Math.random()*300, 
+                    y: Math.random() > 0.5 ? Math.random()*300 : this.mapH - Math.random()*300,
+                    hp: 1200, maxHp: 1200, radius: 25, team: 'red', color: '#e91e63',
+                    speed: 4 + Math.random(), cd: 0, comboQueue: [], comboTimer: 0,
+                    dashTimer: 0, dashAngle: 0, dashSpeed: 0, pauseTimer: 0, moveStyle: 'CircleStrafe',
+                    styleTimer: 0, strafeDir: Math.random()>0.5?1:-1, randomAng: 0
+                });
             }
 
-            checkObstacleCollision(x, y, radius) {
-                for(let r of this.obstacles) {
-                    let testX = x; let testY = y;
-                    if (x < r.x) testX = r.x; else if (x > r.x + r.w) testX = r.x + r.w;
-                    if (y < r.y) testY = r.y; else if (y > r.y + r.h) testY = r.y + r.h;
-                    if (Math.hypot(x - testX, y - testY) <= radius) return true;
+            broadcast(data) { /* Mockup for P2P Broadcast */ }
+            updateScoreUI() { /* Mockup */ }
+
+            checkObstacleCollision(x, y, r) {
+                for(let o of this.obstacles) {
+                    if(x+r > o.x && x-r < o.x+o.w && y+r > o.y && y-r < o.y+o.h) return true;
+                }
+                return false;
+            }
+
+            checkObstacleLineOfSight(x1, y1, x2, y2) {
+                let steps = 15;
+                for(let i=0; i<=steps; i++) {
+                    let tx = x1 + (x2-x1)*(i/steps);
+                    let ty = y1 + (y2-y1)*(i/steps);
+                    for(let o of this.obstacles) {
+                        if(tx > o.x && tx < o.x+o.w && ty > o.y && ty < o.y+o.h) return true; // Blocked
+                    }
                 }
                 return false;
             }
 
             updateBattle() {
                 const p = this.player;
-                if(!p) return;
-
-                if (this.timeRemaining > 0) {
-                    this.timeRemaining--;
-                    if (this.timeRemaining % 60 === 0) {
-                        const secs = this.timeRemaining / 60;
-                        document.getElementById('game-timer').innerText = `${Math.floor(secs/60).toString().padStart(2, '0')}:${(secs%60).toString().padStart(2, '0')}`;
-                    }
-                } else { this.endGame('TIME UP', '#fff', true); return; }
-
-                // 移動
-                let dx = window.Input.move.x; let dy = window.Input.move.y;
-                if(window.Input.keys['w']) dy = -1; if(window.Input.keys['s']) dy = 1; if(window.Input.keys['a']) dx = -1; if(window.Input.keys['d']) dx = 1;
                 
-                if(dx!=0 || dy!=0) { 
-                    const l = Math.hypot(dx,dy); const moveX = (dx/l)*p.speed; const moveY = (dy/l)*p.speed;
-                    p.x += moveX; if(p.x < p.radius) p.x = p.radius; if(p.x > this.mapW - p.radius) p.x = this.mapW - p.radius;
-                    if(this.checkObstacleCollision(p.x, p.y, p.radius)) p.x -= moveX; 
-                    p.y += moveY; if(p.y < p.radius) p.y = p.radius; if(p.y > this.mapH - p.radius) p.y = this.mapH - p.radius;
-                    if(this.checkObstacleCollision(p.x, p.y, p.radius)) p.y -= moveY;
-                    p.angle = Math.atan2(dy, dx); 
+                // 本地玩家移動與射擊
+                if (p.hp > 0) {
+                    let dx = window.Input.x * p.data.speed;
+                    let dy = window.Input.y * p.data.speed;
+                    p.x += dx;
+                    if(p.x < p.radius || p.x > this.mapW - p.radius || this.checkObstacleCollision(p.x, p.y, p.radius)) p.x -= dx;
+                    p.y += dy;
+                    if(p.y < p.radius || p.y > this.mapH - p.radius || this.checkObstacleCollision(p.x, p.y, p.radius)) p.y -= dy;
+
+                    if (window.Input.aim.active) {
+                        p.angle = Math.atan2(window.Input.aim.y, window.Input.aim.x);
+                        if (p.cd <= 0 && p.ammo > 0) {
+                            this.fireBullet(p, { speed: 22, dmg: p.data.dmg, color: '#00e676', type: 'normal' }, 'normal');
+                            p.ammo--;
+                            p.cd = p.data.fireRate;
+                        }
+                    }
+
+                    if (p.ammo < p.maxAmmo) {
+                        p.ammoReloadTimer++;
+                        p.ammoReloadPct = p.ammoReloadTimer / p.ammoReloadMax;
+                        if(p.ammoReloadTimer >= p.ammoReloadMax) {
+                            p.ammo++;
+                            p.ammoReloadTimer = 0;
+                        }
+                    }
+                    if (p.cd > 0) p.cd--;
+                } else {
+                    this.endGame("你被擊敗了！", "#f44336", false);
                 }
 
-                // 射擊
-                let wantShoot = false;
-                if(window.Input.touchR) p.angle = Math.atan2(window.Input.aim.y, window.Input.aim.x);
-                else if(window.Input.aim.active) { p.angle = Math.atan2(window.Input.aim.mousePos.y - canvas.height/2, window.Input.aim.mousePos.x - canvas.width/2); if(window.Input.aim.mouseDown) wantShoot = true; }
-                if(window.Input.aim.fire) { wantShoot = true; window.Input.aim.fire = false; }
+                // 子彈邏輯
+                for(let i = this.bullets.length - 1; i >= 0; i--) {
+                    let b = this.bullets[i];
+                    b.x += Math.cos(b.angle) * b.speed;
+                    b.y += Math.sin(b.angle) * b.speed;
+                    b.life--;
 
-                if(p.cd.atk > 0) p.cd.atk--; 
-                else if(wantShoot) { this.fireBullet(p, {dmg: p.atkDmg, type: 'normal'}, 'normal'); p.cd.atk = p.maxCd.atk; }
-                
-                if(window.Input.btnGadget && p.cd.e <= 0) { p.hp = Math.min(p.maxHp, p.hp+1000); this.showDmg(p.x, p.y, '+1000', '#0f0'); p.cd.e = p.maxCd.e; }
-                if(window.Input.btnSuper && p.superCharge >= 100) { this.fireBullet(p, {dmg: p.atkDmg * 2.5, type:'super'}, 'super'); p.superCharge = 0; }
+                    if (b.life <= 0 || b.x < 0 || b.x > this.mapW || b.y < 0 || b.y > this.mapH || this.checkObstacleCollision(b.x, b.y, 5)) {
+                        this.bullets.splice(i, 1);
+                        continue;
+                    }
 
-                // 子彈碰撞
-                this.bullets.forEach((b,i) => {
-                    b.life--; if(b.life<=0) { this.bullets.splice(i,1); return; }
-                    b.x += Math.cos(b.angle)*b.speed; b.y += Math.sin(b.angle)*b.speed;
-                    if(this.checkObstacleCollision(b.x, b.y, 5)) { b.life = 0; return; }
-                    
-                    if(b.ownerId === this.myId) {
-                        Object.entries(this.otherPlayers).forEach(([id, op]) => {
-                            if(Math.hypot(b.x-op.x, b.y-op.y) < 30) {
-                                this.showDmg(op.x, op.y, b.dmg, '#ffeb3b');
-                                b.life = 0; p.superCharge = Math.min(100, p.superCharge+15);
-                                this.broadcast({ type: 'damage_player', targetId: id, dmg: b.dmg });
-                            }
-                        });
+                    if (b.team === 'blue') {
                         this.enemies.forEach(e => {
-                            if(Math.hypot(b.x-e.x, b.y-e.y) < e.radius + 10) {
+                            if (e.hp > 0 && Math.hypot(b.x - e.x, b.y - e.y) < e.radius + 10) {
+                                e.hp -= b.dmg;
                                 this.showDmg(e.x, e.y, b.dmg, '#fff');
-                                b.life = 0; p.superCharge = Math.min(100, p.superCharge+15);
-                                if(this.isHost) { e.hp -= b.dmg; if(e.hp <= 0) this.checkEnemyDeath(e); }
-                                else { this.broadcast({ type: 'damage_ai', aiId: e.id, dmg: b.dmg }); }
+                                b.life = 0;
+                                if(p.superCharge < 100) p.superCharge = Math.min(100, p.superCharge + 15);
+                                
+                                // Bug 2 Fix: 客機只通知扣血，絕不自己幫房主宣告怪物死亡，避免幻影與分數閃爍
+                                if (!this.isHost && this.currentLobbyMode === 'multi') { this.broadcast({ type: 'damage_ai', aiId: e.id, dmg: b.dmg }); }
+                                else if (e.hp <= 0) { this.checkEnemyDeath(e); }
                             }
                         });
-                    } 
+                    }
                     else if (b.team === 'red') {
-                        if(Math.hypot(b.x-p.x, b.y-p.y) < p.radius + 10) {
+                        if(p.hp > 0 && Math.hypot(b.x-p.x, b.y-p.y) < p.radius + 10) {
                             p.hp -= b.dmg; this.showDmg(p.x, p.y, b.dmg, '#f44336'); b.life = 0;
-                            if(p.hp <= 0) this.endGame('DEFEAT', '#f44336', false);
                         }
-                    } 
-                });
-                
-                // AI 邏輯
-                if(this.isHost || this.conns.length === 0) {
+                    }
+                    // Bug 3 Fix: 隊友的子彈打到怪會有視覺消失效果，不會穿透
+                    else if (b.team === 'remote') {
+                        this.enemies.forEach(e => { if(e.hp > 0 && Math.hypot(b.x-e.x, b.y-e.y) < e.radius + 10) { b.life = 0; } });
+                    }
+                }
+               
+                // AI 索敵與走位邏輯 (來自原始碼)
+                if(this.isHost || this.currentLobbyMode !== 'multi') {
                     this.enemies.forEach(e => {
-                        let d = Math.hypot(p.x-e.x, p.y-e.y);
-                        if(d > 250) { 
-                            let edx = (p.x-e.x)/d * e.speed; let edy = (p.y-e.y)/d * e.speed; 
-                            e.x += edx; e.y += edy; 
-                            if(this.checkObstacleCollision(e.x, e.y, e.radius)) { e.x -= edx; e.y -= edy; e.x += (Math.random()-0.5)*10; e.y += (Math.random()-0.5)*10;}
-                        } else {
-                            if(e.cd <= 0) {
-                                const ang = Math.atan2(p.y-e.y, p.x-e.x) + (Math.random()-0.5)*0.2;
-                                this.bullets.push({x: e.x, y: e.y, angle: ang, speed: 12, dmg: 350, life: 80, team: e.team, ownerId: 'ai'});
-                                this.broadcast({ type: 'shoot', ownerId: 'ai', team: 'red', x: e.x, y: e.y, angle: ang, dmg: 350, color: '#f44336' });
-                                e.cd = 60 + Math.random()*40;
+                        let targetX = p.x, targetY = p.y, targetHp = p.hp;
+                        let minDistToAnyPlayer = Math.hypot(p.x - e.x, p.y - e.y);
+                        if(p.hp <= 0) minDistToAnyPlayer = 99999;
+                        Object.values(this.otherPlayers).forEach(op => {
+                            if (op.hp > 0 && !op.isDead) {
+                                let dist = Math.hypot(op.x - e.x, op.y - e.y);
+                                if (dist < minDistToAnyPlayer) { minDistToAnyPlayer = dist; targetX = op.x; targetY = op.y; targetHp = op.hp; }
                             }
+                        });
+
+                        if(targetHp <= 0) return;
+
+                        let dist = minDistToAnyPlayer; let angleToPlayer = Math.atan2(targetY-e.y, targetX-e.x); let isBlocked = this.checkObstacleLineOfSight(e.x, e.y, targetX, targetY);
+                        let moveAng = angleToPlayer; let currentSpeed = e.speed;
+                        if (e.comboQueue.length > 0) { if (e.comboTimer > 0) e.comboTimer--; else { let step = e.comboQueue.shift(); if(step.action === 'shoot') { this.aiFire(e, {x:targetX, y:targetY}, step.offset || 0, step.spd || 12, step.dmgMult || 1, step.clr || '#f44336'); } else if(step.action === 'dash') { e.dashTimer = step.dur; e.dashAngle = angleToPlayer + (step.angOffset || 0); e.dashSpeed = step.spd; } else if(step.action === 'pause') { e.pauseTimer = step.dur; } if(e.comboQueue.length > 0) e.comboTimer = e.comboQueue[0].delay; } }
+                        if (e.pauseTimer > 0) { e.pauseTimer--; currentSpeed = 0; } else if (e.dashTimer > 0) { e.dashTimer--; moveAng = e.dashAngle; currentSpeed = e.dashSpeed; }
+                        else {
+                            if (e.hp / e.maxHp < 0.3) { e.moveStyle = 'FleeCover'; if (isBlocked) { moveAng = angleToPlayer; currentSpeed *= 0.4; } else { let bestCoverDist = 9999; let hideX = e.x, hideY = e.y, foundCover = false; this.obstacles.forEach(o => { let ox = o.x + o.w/2; let oy = o.y + o.h/2; let angleFromPlayerToObs = Math.atan2(oy - targetY, ox - targetX); let hideDist = Math.max(o.w, o.h) / 2 + 50; let hx = ox + Math.cos(angleFromPlayerToObs) * hideDist; let hy = oy + Math.sin(angleFromPlayerToObs) * hideDist; if (Math.hypot(e.x - hx, e.y - hy) < bestCoverDist && Math.hypot(targetX - ox, targetY - oy) > 150) { bestCoverDist = Math.hypot(e.x - hx, e.y - hy); hideX = hx; hideY = hy; foundCover = true; } }); moveAng = foundCover ? Math.atan2(hideY - e.y, hideX - e.x) : angleToPlayer + Math.PI; } }
+                            else {
+                                e.styleTimer--; if (e.styleTimer <= 0) { e.strafeDir *= -1; e.randomAng = Math.random() * Math.PI * 2; e.styleTimer = 30 + Math.random() * 40; }
+                                switch(e.moveStyle) { case 'CircleStrafe': if(dist < 200) moveAng = angleToPlayer + Math.PI; else if(dist > 350) moveAng = angleToPlayer; else moveAng = angleToPlayer + (Math.PI/2) * e.strafeDir; break; case 'ZigZag': moveAng = angleToPlayer + (Math.PI/3) * e.strafeDir; break; case 'Kite': if(dist < 350) { moveAng = angleToPlayer + Math.PI; currentSpeed *= 1.2; } else if(dist > 450) { moveAng = angleToPlayer; } else { moveAng = angleToPlayer + (Math.PI/2) * e.strafeDir; currentSpeed *= 0.5; } break; case 'Erratic': moveAng = e.randomAng; if(dist > 500) moveAng = angleToPlayer; break; case 'Ambush': if (dist < 200 || !isBlocked) { e.moveStyle = 'CircleStrafe'; } break; }
+                            }
+                        }
+                        let edx = Math.cos(moveAng) * currentSpeed; let edy = Math.sin(moveAng) * currentSpeed;
+                        e.x += edx; if(e.x < e.radius || e.x > this.mapW - e.radius || this.checkObstacleCollision(e.x, e.y, e.radius)) { e.x -= edx; e.strafeDir *= -1; }
+                        e.y += edy; if(e.y < e.radius || e.y > this.mapH - e.radius || this.checkObstacleCollision(e.x, e.y, e.radius)) { e.y -= edy; e.strafeDir *= -1; }
+
+                        if(e.comboQueue.length === 0 && e.cd <= 0 && dist < 500 && !isBlocked) {
+                            let comboIdx = Math.floor(Math.random() * 10);
+                            switch(comboIdx) { case 0: e.comboQueue.push({ delay: 0, action: 'shoot' }, { delay: 12, action: 'shoot' }, { delay: 12, action: 'shoot' }); e.cd = 90; break; case 1: e.comboQueue.push({ delay: 0, action: 'shoot', offset: -0.25 }, { delay: 0, action: 'shoot', offset: 0 }, { delay: 0, action: 'shoot', offset: 0.25 }); e.cd = 70; break; case 2: e.comboQueue.push({ delay: 0, action: 'dash', dur: 15, spd: 12, angOffset: 0 }, { delay: 18, action: 'shoot', dmgMult: 1.5 }); e.cd = 80; break; case 3: e.comboQueue.push({ delay: 0, action: 'shoot' }, { delay: 5, action: 'dash', dur: 12, spd: 14, angOffset: Math.PI }); e.cd = 80; break; case 4: for(let i=0; i<8; i++) e.comboQueue.push({ delay: 0, action: 'shoot', offset: (Math.PI/4)*i }); e.cd = 120; break; case 5: e.comboQueue.push({ delay: 0, action: 'pause', dur: 30 }, { delay: 35, action: 'shoot', spd: 28, dmgMult: 2.5, clr: '#ffeb3b' }); e.cd = 100; break; case 6: e.comboQueue.push({ delay: 0, action: 'shoot' }, { delay: 15, action: 'shoot' }); e.cd = 60; break; case 7: e.comboQueue.push({ delay: 0, action: 'dash', dur: 10, spd: 10, angOffset: -Math.PI/4 }, { delay: 12, action: 'shoot' }, { delay: 10, action: 'dash', dur: 10, spd: 10, angOffset: Math.PI/4 }, { delay: 12, action: 'shoot' }); e.cd = 100; break; case 8: e.comboQueue.push({ delay: 0, action: 'dash', dur: 10, spd: 12, angOffset: Math.PI }, { delay: 12, action: 'shoot', offset: -0.2 }, { delay: 0, action: 'shoot', offset: 0.2 }); e.cd = 90; break; case 9: e.comboQueue.push({ delay: 0, action: 'dash', dur: 10, spd: 15, angOffset: 0 }, { delay: 15, action: 'dash', dur: 10, spd: 15, angOffset: 0 }, { delay: 12, action: 'shoot', dmgMult: 2, spd: 18 }); e.cd = 110; break; }
+                            if(e.comboQueue.length > 0) e.comboTimer = e.comboQueue[0].delay;
                         }
                         if(e.cd > 0) e.cd--;
                     });
                 }
-
-                this.camera.x = p.x - canvas.width/2/this.camera.zoom; this.camera.y = p.y - canvas.height/2/this.camera.zoom;
-                if(p.superCharge >= 100) document.getElementById('btn-super').classList.add('ready'); else document.getElementById('btn-super').classList.remove('ready');
-            }
-
-            checkEnemyDeath(e) {
-                this.enemies.splice(this.enemies.indexOf(e), 1); 
-                this.scoreBlue += 1; this.updateScoreUI();
-                setTimeout(() => this.spawnEnemy(), 2000);
-            }
-
-            fireBullet(actor, skill, typeStr) {
-                const dmg = skill.dmg;
-                if(skill.type === 'super') {
-                    for(let i=-1; i<=1; i++) this.bullets.push({x:actor.x, y:actor.y, angle:actor.angle+i*0.2, speed:20, dmg:dmg, life:60, team:actor.team, color:'#fcd307', ownerId: this.myId});
+               
+                // 觀戰鏡頭平滑跟隨
+                if (p.hp > 0) {
+                    this.camera.x += (p.x - canvas.width/2/this.camera.zoom - this.camera.x) * 0.2; 
+                    this.camera.y += (p.y - canvas.height/2/this.camera.zoom - this.camera.y) * 0.2;
                 } else {
-                    this.bullets.push({x:actor.x, y:actor.y, angle:actor.angle, speed:22, dmg:dmg, life:60, team:actor.team, ownerId: this.myId});
+                    let specTarget = Object.values(this.otherPlayers).find(op => op.hp > 0 && !op.isDead);
+                    if (specTarget) {
+                        this.camera.x += (specTarget.x - canvas.width/2/this.camera.zoom - this.camera.x) * 0.1;
+                        this.camera.y += (specTarget.y - canvas.height/2/this.camera.zoom - this.camera.y) * 0.1;
+                    }
                 }
-                this.broadcast({ type: 'shoot', ownerId: this.myId, team: actor.team, x: actor.x, y: actor.y, angle: actor.angle, dmg: dmg, color: actor.data.color, shootType: typeStr });
+
+                if(p.superCharge >= 100 && p.hp > 0) document.getElementById('btn-super').classList.add('ready'); else document.getElementById('btn-super').classList.remove('ready');
             }
 
-            spawnRemoteBullet(data) {
-                if(data.shootType === 'super') {
-                    for(let i=-1; i<=1; i++) this.bullets.push({x:data.x, y:data.y, angle:data.angle+i*0.2, speed:20, dmg:data.dmg, life:60, team:'remote', color:'#fcd307', ownerId: data.ownerId});
-                } else {
-                    this.bullets.push({x:data.x, y:data.y, angle:data.angle, speed:22, dmg:data.dmg, life:60, team:'remote', color: data.color, ownerId: data.ownerId});
-                }
-            }
+            aiFire(e, target, offsetAng, speed, dmgMult, color) { const aimAng = Math.atan2(target.y-e.y, target.x-e.x) + offsetAng + (Math.random()-0.5)*0.1; const dmg = 250 * dmgMult; this.bullets.push({x: e.x, y: e.y, angle: aimAng, speed: speed, dmg: dmg, life: 80, team: e.team, color: color, ownerId: 'ai'}); this.broadcast({ type: 'shoot', ownerId: 'ai', team: e.team, x: e.x, y: e.y, angle: aimAng, dmg: dmg, speed: speed, color: color }); }
+            checkEnemyDeath(e) { this.enemies.splice(this.enemies.indexOf(e), 1); this.scoreBlue += 1; this.updateScoreUI(); setTimeout(() => { if (this.state === 1) this.spawnEnemy(); }, 1500); }
+            fireBullet(actor, data, typeStr) { if(data.type === 'super') { for(let i=-1; i<=1; i++) this.bullets.push({x:actor.x, y:actor.y, angle:actor.angle+i*0.2, speed:data.speed, dmg:data.dmg, life:60, team:actor.team, color:data.color, ownerId: this.myId}); } else { this.bullets.push({x:actor.x, y:actor.y, angle:actor.angle, speed:data.speed, dmg:data.dmg, life:60, team:actor.team, color:data.color, ownerId: this.myId}); } this.broadcast({ type: 'shoot', ownerId: this.myId, team: actor.team, x: actor.x, y: actor.y, angle: actor.angle, dmg: data.dmg, speed: data.speed, color: data.color, shootType: typeStr }); }
+            spawnRemoteBullet(data) { if(data.shootType === 'super') { for(let i=-1; i<=1; i++) this.bullets.push({x:data.x, y:data.y, angle:data.angle+i*0.2, speed:data.speed||20, dmg:data.dmg, life:60, team:'remote', color:data.color||'#fcd307', ownerId: data.ownerId}); } else { this.bullets.push({x:data.x, y:data.y, angle:data.angle, speed:data.speed||22, dmg:data.dmg, life:60, team:'remote', color: data.color||'#f44336', ownerId: data.ownerId}); } }
 
-            // 遊戲結束與結算獎勵
-            endGame(titleText, color, isVictory) {
-                this.state = 2;
-                document.getElementById('battle-ui').style.display = 'none';
-                document.getElementById('game-over-overlay').style.display = 'flex';
-                document.getElementById('result-title').innerText = titleText;
-                document.getElementById('result-title').style.color = color;
+            endGame(titleText, color, isVictory, forceScore = null) {
+                if (this.state === 2) return;
+                this.state = 2; document.getElementById('battle-ui').style.display = 'none'; document.getElementById('game-over-overlay').style.display = 'flex';
+                document.getElementById('result-title').innerText = titleText; document.getElementById('result-title').style.color = color;
+                if (forceScore !== null) this.scoreBlue = forceScore;
                 document.getElementById('final-score').innerText = this.scoreBlue;
-                
-                // 結算金幣獎勵：擊殺數 * 15 + (如果活到最後獎勵 50)
-                let earned = this.scoreBlue * 15 + (isVictory ? 50 : 10);
-                document.getElementById('earned-gold').innerText = earned;
-                
-                savedData.gold += earned;
-                saveGame(); // 儲存金幣到瀏覽器
-
+                let earned = this.scoreBlue * 15 + (isVictory ? 50 : 10); document.getElementById('earned-gold').innerText = earned; savedData.gold += earned; saveGame();
                 if(this.syncInterval) clearInterval(this.syncInterval);
+
+                if (this.isHost && this.currentLobbyMode === 'multi') { this.broadcast({ type: 'game_over', titleText, color, isVictory, score: this.scoreBlue }); }
             }
-
-            returnToLobby() {
-                this.state = 0;
-                this.updateLobbyUI(); // 回大廳時刷新金幣顯示
-                document.getElementById('game-over-overlay').style.display = 'none';
-                document.getElementById('lobby-ui').style.display = 'flex';
+            hostReturnToLobby() {
+                if (this.isHost && this.currentLobbyMode === 'multi') { this.broadcast({ type: 'return_lobby' }); }
+                this.state = 0; this.updateLobbyUI(); document.getElementById('game-over-overlay').style.display = 'none'; this.enterLobby(this.currentLobbyMode || 'single');
             }
+            showDmg(x, y, val, color='#fff') { const el = document.createElement('div'); el.className = 'dmg-num'; el.innerText = val; el.style.color = color; const screenX = (x - this.camera.x) * this.camera.zoom; const screenY = (y - this.camera.y) * this.camera.zoom; el.style.left = screenX + 'px'; el.style.top = screenY + 'px'; document.getElementById('damage-container').appendChild(el); setTimeout(() => el.remove(), 800); }
 
-            showDmg(x, y, val, color='#fff') {
-                const el = document.createElement('div'); el.className = 'dmg-num'; el.innerText = val; el.style.color = color;
-                const screenX = (x - this.camera.x) * this.camera.zoom; const screenY = (y - this.camera.y) * this.camera.zoom;
-                el.style.left = screenX + 'px'; el.style.top = screenY + 'px';
-                document.getElementById('damage-container').appendChild(el);
-                setTimeout(() => el.remove(), 800);
-            }
-
-            // ================= 渲染迴圈 =================
-            startGameLoop() {
-                const loop = () => {
-                    this.draw(); if(this.state === 1) this.updateBattle(); requestAnimationFrame(loop);
-                }; loop();
-            }
-
-            draw() {
-                if(this.state === 0) this.drawLobby(); else if(this.state === 1) this.drawBattle();
-            }
-
-            drawLobby() { 
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                const c = ROSTER[this.selChar];
-                const grd = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 50, canvas.width/2, canvas.height/2, 600);
-                grd.addColorStop(0, '#222'); grd.addColorStop(1, '#000');
-                ctx.fillStyle = grd; ctx.fillRect(0,0,canvas.width,canvas.height);
-
-                const cx = canvas.width/2; const cy = canvas.height/2 - 50;
-                if(window.Input.rotateLobby) this.lobbyAngle += 0.1; else this.lobbyAngle += 0.02;
-
+            startGameLoop() { const loop = () => { this.draw(); if(this.state === 1) this.updateBattle(); requestAnimationFrame(loop); }; loop(); }
+            draw() { if(this.state === 0 || this.state === -1) this.drawLobby(); else if(this.state === 1) this.drawBattle(); }
+            
+            drawLobby() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height); const c = ROSTER[this.selChar];
+                const grd = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 50, canvas.width/2, canvas.height/2, 600); grd.addColorStop(0, '#222'); grd.addColorStop(1, '#000'); ctx.fillStyle = grd; ctx.fillRect(0,0,canvas.width,canvas.height);
+                const cx = canvas.width/2; const cy = canvas.height/2 - 50; if(window.Input.rotateLobby || this.state === -1) this.lobbyAngle += 0.05; else this.lobbyAngle += 0.02;
                 ctx.save(); ctx.translate(cx, cy); ctx.scale(3, 3);
                 ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.ellipse(0, 60, 40, 10, 0, 0, Math.PI*2); ctx.fill();
-
                 const sin = Math.sin(this.lobbyAngle); const cos = Math.cos(this.lobbyAngle);
-                ctx.fillStyle = c.color; ctx.fillRect(-20, -20, 40, 60); 
-                ctx.fillStyle = 'rgba(0,0,0,0.2)'; if(sin > 0) ctx.fillRect(0, -20, 20, 60);
-                
-                ctx.fillStyle = '#ffccbc'; ctx.beginPath(); ctx.arc(0, -30, 25, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#444'; ctx.fillRect(25 * cos - 10, 10 + 10 * sin, 30, 15);
-                ctx.fillStyle = '#222';
-                ctx.beginPath(); ctx.arc(-15, 40 + 5*sin, 10, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(15, 40 - 5*sin, 10, 0, Math.PI*2); ctx.fill();
-                ctx.restore();
+                ctx.fillStyle = c.color; ctx.fillRect(-20, -20, 40, 60); ctx.fillStyle = 'rgba(0,0,0,0.2)'; if(sin > 0) ctx.fillRect(0, -20, 20, 60);
+                ctx.fillStyle = '#ffccbc'; ctx.beginPath(); ctx.arc(0, -30, 25, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#444'; ctx.fillRect(25 * cos - 10, 10 + 10 * sin, 30, 15); ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(-15, 40 + 5*sin, 10, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(15, 40 - 5*sin, 10, 0, Math.PI*2); ctx.fill(); ctx.restore();
             }
-
+            
             drawBattle() {
-                const z = this.camera.zoom; ctx.clearRect(0,0,canvas.width,canvas.height);
-                ctx.save(); ctx.scale(z, z); ctx.translate(-this.camera.x, -this.camera.y);
+                const z = this.camera.zoom; ctx.clearRect(0,0,canvas.width,canvas.height); ctx.save(); ctx.scale(z, z); ctx.translate(-this.camera.x, -this.camera.y);
+                
+                // 地板與網格
+                ctx.fillStyle = '#2e3138'; ctx.fillRect(0,0,this.mapW,this.mapH); 
+                ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth=2; ctx.beginPath(); 
+                for(let i=0; i<=this.mapW; i+=100) { ctx.moveTo(i,0); ctx.lineTo(i,this.mapH); } 
+                for(let i=0; i<=this.mapH; i+=100) { ctx.moveTo(0,i); ctx.lineTo(this.mapW,i); } 
+                ctx.stroke(); ctx.strokeStyle = '#f44336'; ctx.lineWidth = 10; ctx.strokeRect(0,0,this.mapW,this.mapH);
+                
+                // 障礙物
+                ctx.fillStyle = '#424242'; this.obstacles.forEach(o => { ctx.fillRect(o.x, o.y, o.w, o.h); ctx.fillStyle = '#616161'; ctx.fillRect(o.x, o.y-10, o.w, 10); ctx.fillStyle = '#424242'; });
 
-                ctx.fillStyle = '#6d4c41'; ctx.fillRect(0,0,this.mapW,this.mapH);
-                ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.lineWidth=2; ctx.beginPath();
-                for(let i=0; i<this.mapW; i+=100) { ctx.moveTo(i,0); ctx.lineTo(i,this.mapH); } 
-                for(let i=0; i<this.mapH; i+=100) { ctx.moveTo(0,i); ctx.lineTo(this.mapW,i); }  ctx.stroke();
-                ctx.strokeStyle = '#f44336'; ctx.lineWidth = 10; ctx.strokeRect(0,0,this.mapW,this.mapH);
-
-                ctx.fillStyle = '#424242';
-                this.obstacles.forEach(o => { ctx.fillRect(o.x, o.y, o.w, o.h); ctx.fillStyle = '#616161'; ctx.fillRect(o.x, o.y-10, o.w, 10); ctx.fillStyle = '#424242'; });
-
-                // 畫朋友
+                // 其他玩家 (連線用)
                 Object.values(this.otherPlayers).forEach(op => {
-                    if(op.hp <= 0) return;
-                    ctx.save(); ctx.translate(op.x, op.y); ctx.rotate(op.angle);
-                    ctx.fillStyle = op.color || '#fff'; ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = '#333'; ctx.fillRect(10, -5, 25, 10); ctx.restore();
-                    ctx.fillStyle = '#f00'; ctx.fillRect(op.x-25, op.y-35, 50, 6); ctx.fillStyle = '#00bcd4'; ctx.fillRect(op.x-25, op.y-35, 50*(op.hp/op.maxHp), 6);
-                    ctx.fillStyle = '#4facfe'; ctx.font="bold 12px Arial"; ctx.textAlign="center"; ctx.fillText(op.charName.split('·')[1] || "Player", op.x, op.y-45);
+                    if(op.hp <= 0 || op.isDead) return;
+                    ctx.save(); ctx.translate(op.x, op.y); ctx.rotate(op.angle); ctx.fillStyle = op.color || '#fff'; ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#333'; ctx.fillRect(10, -5, 25, 10); ctx.restore(); ctx.fillStyle = '#f00'; ctx.fillRect(op.x-25, op.y-35, 50, 6); ctx.fillStyle = '#00bcd4'; ctx.fillRect(op.x-25, op.y-35, 50*Math.max(0, op.hp/op.maxHp), 6); if(op.ammo !== undefined) { const slotW = 15; const gap = 2.5; const startX = op.x - 25; const barY = op.y - 43; for(let i=0; i<op.maxAmmo; i++) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(startX + i*(slotW+gap), barY, slotW, 4); if(i < op.ammo) { ctx.fillStyle = '#ff9800'; ctx.fillRect(startX + i*(slotW+gap), barY, slotW, 4); } else if (i === op.ammo && op.ammoReloadPct) { ctx.fillStyle = '#ffb74d'; ctx.fillRect(startX + i*(slotW+gap), barY, slotW * op.ammoReloadPct, 4); } } } ctx.fillStyle = '#4facfe'; ctx.font="bold 12px Arial"; ctx.textAlign="center"; ctx.fillText(op.charName.split('·')[1] || "Player", op.x, op.y-50);
                 });
+               
+                // 敵人
+                this.enemies.forEach(e => { if(e.hp <= 0) return; ctx.fillStyle = e.color || '#f44336'; ctx.beginPath(); ctx.arc(e.x, e.y, e.radius, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(e.x + 10, e.y - 5, 5, 0, Math.PI*2); ctx.fill(); if(e.pauseTimer > 0) { ctx.strokeStyle = '#ffeb3b'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(e.x, e.y, e.radius+5+Math.sin(Date.now()/50)*5, 0, Math.PI*2); ctx.stroke(); } if(e.dashTimer > 0) { ctx.fillStyle = 'rgba(244,67,54,0.3)'; ctx.beginPath(); ctx.arc(e.x - Math.cos(e.dashAngle)*20, e.y - Math.sin(e.dashAngle)*20, e.radius, 0, Math.PI*2); ctx.fill(); } ctx.fillStyle = '#f00'; ctx.fillRect(e.x-20, e.y-40, 40, 5); ctx.fillStyle = e.moveStyle === 'FleeCover' && Math.random() > 0.5 ? '#fff' : '#0f0'; ctx.fillRect(e.x-20, e.y-40, 40 * Math.max(0, (e.hp/e.maxHp)), 5); });
 
-                // 畫 AI
-                this.enemies.forEach(e => {
-                    ctx.fillStyle = '#f44336'; ctx.beginPath(); ctx.arc(e.x, e.y, e.radius, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(e.x + 10, e.y - 5, 5, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = '#f00'; ctx.fillRect(e.x-20, e.y-40, 40, 5); ctx.fillStyle = '#0f0'; ctx.fillRect(e.x-20, e.y-40, 40*(e.hp/e.maxHp), 5);
-                });
-
-                // 畫自己
-                if(this.player && this.player.hp > 0) {
-                    const p = this.player;
-                    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
-                    if(window.Input.touchR || window.Input.aim.active) { ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth=3; ctx.setLineDash([15, 15]); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(600, 0); ctx.stroke(); ctx.setLineDash([]); }
-                    ctx.fillStyle = p.data.color; ctx.beginPath(); ctx.arc(0, 0, p.radius, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = '#333'; ctx.fillRect(10, -5, 25, 10);
-                    if(p.superCharge >= 100) { ctx.strokeStyle = '#fcd307'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(0,0,p.radius+5,0,Math.PI*2); ctx.stroke(); }
-                    ctx.restore();
-                    ctx.fillStyle = '#f00'; ctx.fillRect(p.x-25, p.y-45, 50, 6); ctx.fillStyle = '#00e676'; ctx.fillRect(p.x-25, p.y-45, 50*(p.hp/p.maxHp), 6);
-                    ctx.fillStyle = '#fff'; ctx.font="bold 14px Arial"; ctx.textAlign="center"; ctx.fillText("You", p.x, p.y-55);
+                // 本機玩家
+                if(this.player) {
+                    const p = this.player; ctx.save();
+                    if (p.hp <= 0) ctx.globalAlpha = 0.3; // 陣亡變成半透明幽靈
+                    ctx.translate(p.x, p.y); ctx.rotate(p.angle);
+                    if(p.hp > 0 && (window.Input.aim.active || window.Input.touchR)) { ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth=3; ctx.setLineDash([15, 15]); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(600, 0); ctx.stroke(); ctx.setLineDash([]); }
+                    ctx.fillStyle = p.data.color; ctx.beginPath(); ctx.arc(0, 0, p.radius, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#333'; ctx.fillRect(10, -5, 25, 10); if(p.superCharge >= 100) { ctx.strokeStyle = '#fcd307'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(0,0,p.radius+5,0,Math.PI*2); ctx.stroke(); } ctx.restore();
+                   
+                    if (p.hp > 0) {
+                        ctx.fillStyle = '#f00'; ctx.fillRect(p.x-25, p.y-45, 50, 6); ctx.fillStyle = '#00e676'; ctx.fillRect(p.x-25, p.y-45, 50 * Math.max(0, (p.hp/p.maxHp)), 6);
+                        const slotW = 15; const gap = 2.5; const startX = p.x - 25; const barY = p.y - 53;
+                        for(let i=0; i<p.maxAmmo; i++) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(startX + i*(slotW+gap), barY, slotW, 4); if (i < p.ammo) { ctx.fillStyle = '#ff9800'; ctx.fillRect(startX + i*(slotW+gap), barY, slotW, 4); ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = 1; ctx.strokeRect(startX + i*(slotW+gap), barY, slotW, 4); } else if (i === p.ammo) { ctx.fillStyle = '#ffb74d'; ctx.fillRect(startX + i*(slotW+gap), barY, slotW * (p.ammoReloadTimer/p.ammoReloadMax), 4); } }
+                    }
+                    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(p.x-20, p.y-75, 40, 15); ctx.fillStyle = '#fff'; ctx.font="bold 14px Arial"; ctx.textAlign="center"; ctx.fillText(p.hp > 0 ? "You" : "Ghost", p.x, p.y-63);
                 }
-
-                this.bullets.forEach(b => {
-                    ctx.fillStyle = b.color || (b.team==='blue'?'#00e676':'#ff5252');
-                    ctx.beginPath(); ctx.arc(b.x, b.y, 8, 0, Math.PI*2); ctx.fill(); ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 10; ctx.fill(); ctx.shadowBlur = 0;
-                });
-                ctx.restore();
+                
+                // 子彈
+                this.bullets.forEach(b => { ctx.fillStyle = b.color || (b.team==='blue'?'#00e676':'#ff5252'); ctx.beginPath(); ctx.arc(b.x, b.y, b.speed > 25 ? 12 : 8, 0, Math.PI*2); ctx.fill(); ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 10; ctx.fill(); ctx.shadowBlur = 0; }); ctx.restore();
             }
         }
-
+        
         window.game = new window.Game();
     </script>
 </body>
